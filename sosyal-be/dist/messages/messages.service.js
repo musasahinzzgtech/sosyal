@@ -26,42 +26,68 @@ let MessagesService = class MessagesService {
         this.usersService = usersService;
     }
     async createMessage(senderId, receiverId, content, type = 'text', fileUrl, fileName, fileSize) {
-        let conversation = await this.findOrCreateConversation(senderId, receiverId);
-        const message = new this.messageModel({
-            senderId: new mongoose_2.Types.ObjectId(senderId),
-            receiverId: new mongoose_2.Types.ObjectId(receiverId),
-            content,
-            type,
-            fileUrl,
-            fileName,
-            fileSize,
-            status: message_schema_1.MessageStatus.SENT,
-        });
-        const savedMessage = await message.save();
-        await this.conversationModel.findByIdAndUpdate(conversation._id, {
-            lastMessage: savedMessage._id,
-            lastMessageContent: content,
-            lastMessageTime: new Date(),
-            lastMessageSender: new mongoose_2.Types.ObjectId(senderId),
-            [`unreadCounts.${receiverId}`]: (conversation.unreadCounts?.get(receiverId) || 0) + 1,
-        });
-        return savedMessage;
+        try {
+            console.log('Creating message with params:', { senderId, receiverId, content, type });
+            if (!senderId || !receiverId || !content) {
+                throw new Error('Missing required parameters: senderId, receiverId, or content');
+            }
+            let conversation = await this.findOrCreateConversation(senderId, receiverId);
+            console.log('Conversation found/created:', conversation._id);
+            const message = new this.messageModel({
+                senderId: new mongoose_2.Types.ObjectId(senderId),
+                receiverId: new mongoose_2.Types.ObjectId(receiverId),
+                content,
+                type,
+                fileUrl,
+                fileName,
+                fileSize,
+                status: message_schema_1.MessageStatus.SENT,
+            });
+            const savedMessage = await message.save();
+            console.log('Message saved successfully:', savedMessage._id);
+            await this.conversationModel.findByIdAndUpdate(conversation._id, {
+                lastMessage: savedMessage._id,
+                lastMessageContent: content,
+                lastMessageTime: new Date(),
+                lastMessageSender: new mongoose_2.Types.ObjectId(senderId),
+                [`unreadCounts.${receiverId}`]: (conversation.unreadCounts?.get(receiverId) || 0) + 1,
+            });
+            console.log('Conversation updated successfully');
+            return savedMessage;
+        }
+        catch (error) {
+            console.error('Error in createMessage:', error);
+            throw error;
+        }
     }
     async findOrCreateConversation(userId1, userId2) {
-        const participants = [new mongoose_2.Types.ObjectId(userId1), new mongoose_2.Types.ObjectId(userId2)].sort();
-        let conversation = await this.conversationModel.findOne({
-            participants: { $all: participants, $size: participants.length },
-            isGroupChat: false,
-        });
-        if (!conversation) {
-            conversation = new this.conversationModel({
-                participants,
-                unreadCounts: new Map(),
+        try {
+            console.log('Finding or creating conversation for users:', { userId1, userId2 });
+            const participants = [new mongoose_2.Types.ObjectId(userId1), new mongoose_2.Types.ObjectId(userId2)].sort();
+            console.log('Sorted participants:', participants);
+            let conversation = await this.conversationModel.findOne({
+                participants: { $all: participants, $size: participants.length },
                 isGroupChat: false,
             });
-            await conversation.save();
+            if (!conversation) {
+                console.log('No existing conversation found, creating new one');
+                conversation = new this.conversationModel({
+                    participants,
+                    unreadCounts: new Map(),
+                    isGroupChat: false,
+                });
+                await conversation.save();
+                console.log('New conversation created:', conversation._id);
+            }
+            else {
+                console.log('Existing conversation found:', conversation._id);
+            }
+            return conversation;
         }
-        return conversation;
+        catch (error) {
+            console.error('Error in findOrCreateConversation:', error);
+            throw error;
+        }
     }
     async getConversationMessages(conversationId, limit = 50, offset = 0) {
         const conversation = await this.conversationModel.findById(conversationId);

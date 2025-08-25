@@ -21,14 +21,32 @@ let MessagesController = class MessagesController {
         this.messagesService = messagesService;
     }
     async createMessage(body, req) {
-        return this.messagesService.createMessage(req.user.id, body.receiverId, body.content, body.type, body.fileUrl, body.fileName, body.fileSize);
+        try {
+            console.log('Creating message:', { senderId: req.user.id, ...body });
+            const result = await this.messagesService.createMessage(req.user.id, body.receiverId, body.content, body.type, body.fileUrl, body.fileName, body.fileSize);
+            console.log('Message created successfully:', result);
+            return result;
+        }
+        catch (error) {
+            console.error('Error creating message:', error);
+            throw error;
+        }
     }
     async getUserConversations(req) {
         return this.messagesService.getUserConversations(req.user.id);
     }
     async getConversationByParticipants(participants, req) {
-        const participantIds = participants.split(',');
-        return this.messagesService.getConversationByParticipants(participantIds, req.user.id);
+        try {
+            console.log('Getting conversation by participants:', { participants, userId: req.user.id });
+            const participantIds = participants.split(',');
+            const result = await this.messagesService.getConversationByParticipants(participantIds, req.user.id);
+            console.log('Conversation found:', result);
+            return result;
+        }
+        catch (error) {
+            console.error('Error getting conversation by participants:', error);
+            throw error;
+        }
     }
     async getConversationMessages(conversationId, limit = 50, offset = 0) {
         return this.messagesService.getConversationMessages(conversationId, limit, offset);

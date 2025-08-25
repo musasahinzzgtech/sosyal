@@ -52,7 +52,13 @@ class ApiService {
             if (!retryResponse.ok) {
               throw new Error(`HTTP error! status: ${retryResponse.status}`);
             }
-            return await retryResponse.json();
+            // Check if retry response has content before trying to parse JSON
+            const retryText = await retryResponse.text();
+            
+            if (!retryText) {
+              return {};
+            }
+            return JSON.parse(retryText);
           } else {
             // Refresh failed, redirect to login
             throw new Error("Authentication failed");
@@ -61,7 +67,14 @@ class ApiService {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      return await response.json();
+      // Check if response has content before trying to parse JSON
+      const text = await response.text();
+      
+      if (!text) {
+        // Return empty object for empty responses
+        return {};
+      }
+      return JSON.parse(text);
     } catch (error) {
       console.error("API request failed:", error);
       throw error;
@@ -88,7 +101,12 @@ class ApiService {
       });
 
       if (response.ok) {
-        const data = await response.json();
+        const text = await response.text();
+        if (!text) {
+          console.error("Empty response from refresh token endpoint");
+          return false;
+        }
+        const data = JSON.parse(text);
         localStorage.setItem("accessToken", data.access_token);
         localStorage.setItem("refreshToken", data.refresh_token);
         return true;

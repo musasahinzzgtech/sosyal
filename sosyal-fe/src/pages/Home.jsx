@@ -246,7 +246,7 @@ const Home = () => {
           name: profile.name,
           avatar:
             profile.images && profile.images.length > 0
-              ? profile.images[0]
+              ? profile.images[0]?.split("http://localhost:3001")[1]
               : null,
         },
       },

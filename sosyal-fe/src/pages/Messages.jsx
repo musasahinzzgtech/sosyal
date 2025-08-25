@@ -10,7 +10,7 @@ const Messages = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [chats, setChats] = useState([]);
   const [messages, setMessages] = useState([]);
-  console.log('Messages:', messages);
+  console.log("Messages:", messages);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -83,7 +83,9 @@ const Messages = () => {
 
         // Get the receiver ID from the selected chat participants
         const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
-        const receiver = selectedChat.participants.find(p => p._id !== currentUser.id);
+        const receiver = selectedChat.participants.find(
+          (p) => p._id !== currentUser.id
+        );
         const receiverId = receiver?._id || selectedChat.id;
 
         // Send message via WebSocket for real-time delivery
@@ -150,17 +152,24 @@ const Messages = () => {
     if (now - lastTypingTimeRef.current > 1000) {
       // Throttle typing events
       const socketService = (await import("../services/socket")).default;
-      
+
       // Get the receiver ID from the selected chat participants
       const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
-      const receiver = selectedChat.participants?.find(p => p._id !== currentUser.id);
+      const receiver = selectedChat.participants?.find(
+        (p) => p._id !== currentUser.id
+      );
       const receiverId = receiver?._id || selectedChat.id;
-      
-      console.log('Starting typing - receiver:', receiverId, 'socket connected:', socketService.getConnectionStatus());
-      
+
+      console.log(
+        "Starting typing - receiver:",
+        receiverId,
+        "socket connected:",
+        socketService.getConnectionStatus()
+      );
+
       // Ensure socket is connected before trying to emit
       if (!socketService.getConnectionStatus()) {
-        console.log('Socket not connected, attempting to connect...');
+        console.log("Socket not connected, attempting to connect...");
         const token = localStorage.getItem("accessToken");
         if (token) {
           socketService.connect(token);
@@ -192,12 +201,14 @@ const Messages = () => {
     if (!selectedChat) return;
 
     const socketService = (await import("../services/socket")).default;
-    
+
     // Get the receiver ID from the selected chat participants
     const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
-    const receiver = selectedChat.participants?.find(p => p._id !== currentUser.id);
+    const receiver = selectedChat.participants?.find(
+      (p) => p._id !== currentUser.id
+    );
     const receiverId = receiver?._id || selectedChat.id;
-    
+
     // Only try to stop typing if socket is connected
     if (socketService.getConnectionStatus()) {
       socketService.stopTyping(receiverId);
@@ -287,7 +298,7 @@ const Messages = () => {
     const typingNames = Array.from(typingUsers).map((userId) => {
       const chat = chats.find((c) => c.id === selectedChat?.id);
       if (!chat || !chat.participants) return "Someone";
-      
+
       const participant = chat.participants.find((p) => p._id === userId);
       return participant
         ? `${participant.firstName} ${participant.lastName}`
@@ -322,26 +333,35 @@ const Messages = () => {
   // Enhanced message loading with pagination
   const loadMessages = async (conversationId, limit = 50, offset = 0) => {
     if (!conversationId) return;
-    
+
     try {
-      console.log('Loading messages for conversation:', conversationId);
+      console.log("Loading messages for conversation:", conversationId);
       const apiService = (await import("../services/api")).default;
       const conversationMessages = await apiService.getConversationMessages(
         conversationId,
         limit,
         offset
       );
-      
-      console.log('Raw messages from API:', conversationMessages);
-      
+
+      console.log("Raw messages from API:", conversationMessages);
+
       // Transform messages to match the expected format
       const transformedMessages = conversationMessages.map((msg) => {
         // Get current user ID from localStorage
         const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
-        const isCurrentUser = msg.senderId?._id === currentUser.id || msg.senderId === currentUser.id;
-        
-        console.log('Message:', msg, 'Current user:', currentUser, 'Is current user:', isCurrentUser);
-        
+        const isCurrentUser =
+          msg.senderId?._id === currentUser.id ||
+          msg.senderId === currentUser.id;
+
+        console.log(
+          "Message:",
+          msg,
+          "Current user:",
+          currentUser,
+          "Is current user:",
+          isCurrentUser
+        );
+
         return {
           id: msg._id,
           content: msg.content,
@@ -362,9 +382,9 @@ const Messages = () => {
           isDeleted: msg.isDeleted,
         };
       });
-      
-      console.log('Transformed messages:', transformedMessages);
-      
+
+      console.log("Transformed messages:", transformedMessages);
+
       if (offset === 0) {
         setMessages(transformedMessages);
       } else {
@@ -377,17 +397,17 @@ const Messages = () => {
   };
 
   const handleChatSelect = async (chat) => {
-    console.log('Chat selected:', chat);
+    console.log("Chat selected:", chat);
     setSelectedChat(chat);
     setMessages([]); // Clear previous messages
     setTypingUsers(new Set()); // Clear typing indicators
-    
-    console.log('Loading messages for chat:', chat.id);
+
+    console.log("Loading messages for chat:", chat.id);
     await loadMessages(chat.id);
-    
+
     // Mark messages as read
     if (chat.unread > 0) {
-      console.log('Marking conversation as read:', chat.id);
+      console.log("Marking conversation as read:", chat.id);
       markConversationAsRead(chat.id);
     }
   };
@@ -424,16 +444,24 @@ const Messages = () => {
             (p) => p._id !== currentUser.id
           );
 
-          console.log('Other conversations:', conversations, 'Current user:', currentUser);
-          
+          console.log(
+            "Other conversations:",
+            conversations,
+            "Current user:",
+            currentUser
+          );
+
           // Get unread count for current user
           let unreadCount = 0;
           if (conv.unreadCounts && conv.unreadCounts instanceof Map) {
             unreadCount = conv.unreadCounts.get(currentUser.id) || 0;
-          } else if (conv.unreadCounts && typeof conv.unreadCounts === 'object') {
+          } else if (
+            conv.unreadCounts &&
+            typeof conv.unreadCounts === "object"
+          ) {
             unreadCount = conv.unreadCounts[currentUser.id] || 0;
           }
-          
+
           return {
             id: conv._id,
             name: otherParticipant
@@ -475,9 +503,14 @@ const Messages = () => {
 
     // Connect to socket if not already connected
     const token = localStorage.getItem("accessToken");
-    console.log('Socket setup - token:', token ? 'exists' : 'missing', 'connection status:', socketService.getConnectionStatus());
+    console.log(
+      "Socket setup - token:",
+      token ? "exists" : "missing",
+      "connection status:",
+      socketService.getConnectionStatus()
+    );
     if (token && !socketService.getConnectionStatus()) {
-      console.log('Connecting to socket...');
+      console.log("Connecting to socket...");
       socketService.connect(token);
     }
 
@@ -487,7 +520,9 @@ const Messages = () => {
 
       // Get current user ID from localStorage
       const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
-      const isCurrentUser = message.senderId?._id === currentUser.id || message.senderId === currentUser.id;
+      const isCurrentUser =
+        message.senderId?._id === currentUser.id ||
+        message.senderId === currentUser.id;
 
       // If the message is for the currently selected chat, add it to messages
       if (
@@ -572,7 +607,7 @@ const Messages = () => {
       setChats((prev) =>
         prev.map((chat) => {
           if (!chat.participants) return chat;
-          
+
           const hasUser = chat.participants.some((p) => p._id === data.userId);
           return hasUser ? { ...chat, online: true } : chat;
         })
@@ -583,9 +618,11 @@ const Messages = () => {
       setChats((prev) =>
         prev.map((chat) => {
           if (!chat.participants) return chat;
-          
+
           const hasUser = chat.participants.some((p) => p._id === data.userId);
-          return hasUser ? { ...chat, online: false, lastSeen: new Date() } : chat;
+          return hasUser
+            ? { ...chat, online: false, lastSeen: new Date() }
+            : chat;
         })
       );
     });
@@ -628,27 +665,25 @@ const Messages = () => {
   const startNewConversation = async (targetUser) => {
     try {
       setLoading(true);
-      console.log('Starting new conversation with:', targetUser);
-      
+      console.log("Starting new conversation with:", targetUser);
+
       const apiService = (await import("../services/api")).default;
 
       // Create a new conversation by sending the first message
-      console.log('Sending first message...');
-      const messageResponse = await apiService.sendMessage(
+      await apiService.sendMessage(
         targetUser.id,
         "Merhaba! Hizmetleriniz hakkında bilgi almak istiyorum."
       );
-      console.log('First message response:', messageResponse);
 
       // Try to get the conversation directly by participants
       const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
-      console.log('Current user:', currentUser);
-      
+      console.log("Current user:", currentUser);
+
       const conversation = await apiService.getConversationByParticipants([
         currentUser.id,
         targetUser.id,
       ]);
-      console.log('Conversation found:', conversation);
+      console.log("Conversation found:", conversation);
 
       if (conversation) {
         // Transform the conversation to match the expected format
@@ -665,7 +700,7 @@ const Messages = () => {
           participants: conversation.participants,
         };
 
-        console.log('Transformed chat:', transformedChat);
+        console.log("Transformed chat:", transformedChat);
 
         // Add to chats if not already present
         if (!chats.find((chat) => chat.id === conversation._id)) {
@@ -673,14 +708,14 @@ const Messages = () => {
         }
 
         setSelectedChat(transformedChat);
-        
+
         // Wait a bit for the message to be processed, then load messages
         setTimeout(async () => {
-          console.log('Loading messages after delay...');
+          console.log("Loading messages after delay...");
           await loadMessages(conversation._id);
         }, 1000); // Increased delay to ensure message is processed
       } else {
-        console.log('Conversation not found, trying fallback...');
+        console.log("Conversation not found, trying fallback...");
         // Fallback: reload conversations
         await loadConversations();
 
@@ -692,7 +727,7 @@ const Messages = () => {
         );
 
         if (newConversation) {
-          console.log('Found conversation in fallback:', newConversation);
+          console.log("Found conversation in fallback:", newConversation);
           setSelectedChat(newConversation);
           await loadMessages(newConversation.id);
         } else {
@@ -788,7 +823,7 @@ const Messages = () => {
                 <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
                   {newChatUser.avatar && (
                     <img
-                      src={newChatUser.avatar}
+                      src={`http://localhost:3001${newChatUser.avatar}`}
                       alt={newChatUser.name}
                       className="w-12 h-12 rounded-full object-cover"
                     />
