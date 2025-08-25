@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = "http://localhost:3001/api";
 
 class ApiService {
   constructor() {
@@ -7,9 +7,9 @@ class ApiService {
 
   // Helper method to get auth headers
   getAuthHeaders() {
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem("accessToken");
     return {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...(token && { Authorization: `Bearer ${token}` }),
     };
   }
@@ -17,21 +17,37 @@ class ApiService {
   // Generic request method
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
+    
+    // For multipart form data, don't set Content-Type header
+    let headers = {};
+    if (options.body instanceof FormData) {
+      // Let browser set Content-Type with boundary for FormData
+      const token = localStorage.getItem("accessToken");
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+    } else {
+      // For JSON requests, use default headers
+      headers = this.getAuthHeaders();
+    }
+
     const config = {
-      headers: this.getAuthHeaders(),
+      headers,
       ...options,
     };
 
     try {
       const response = await fetch(url, config);
-      
+
       if (!response.ok) {
         if (response.status === 401) {
           // Token expired, try to refresh
           const refreshed = await this.refreshToken();
           if (refreshed) {
             // Retry the original request
-            config.headers = this.getAuthHeaders();
+            if (!(options.body instanceof FormData)) {
+              config.headers = this.getAuthHeaders();
+            }
             const retryResponse = await fetch(url, config);
             if (!retryResponse.ok) {
               throw new Error(`HTTP error! status: ${retryResponse.status}`);
@@ -39,7 +55,7 @@ class ApiService {
             return await retryResponse.json();
           } else {
             // Refresh failed, redirect to login
-            throw new Error('Authentication failed');
+            throw new Error("Authentication failed");
           }
         }
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -47,81 +63,99 @@ class ApiService {
 
       return await response.json();
     } catch (error) {
-      console.error('API request failed:', error);
+      console.error("API request failed:", error);
       throw error;
     }
   }
 
   // Authentication methods
   async login(credentials) {
-    return this.request('/auth/login', {
-      method: 'POST',
+    return this.request("/auth/login", {
+      method: "POST",
       body: JSON.stringify(credentials),
     });
   }
 
   async refreshToken() {
     try {
-      const refreshToken = localStorage.getItem('refreshToken');
+      const refreshToken = localStorage.getItem("refreshToken");
       if (!refreshToken) return false;
 
       const response = await fetch(`${this.baseURL}/auth/refresh`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ refresh_token: refreshToken }),
       });
 
       if (response.ok) {
         const data = await response.json();
-        localStorage.setItem('accessToken', data.access_token);
-        localStorage.setItem('refreshToken', data.refresh_token);
+        localStorage.setItem("accessToken", data.access_token);
+        localStorage.setItem("refreshToken", data.refresh_token);
         return true;
       }
       return false;
     } catch (error) {
-      console.error('Token refresh failed:', error);
+      console.error("Token refresh failed:", error);
       return false;
     }
   }
 
   async logout() {
     try {
-      await this.request('/auth/logout', { method: 'POST' });
+      await this.request("/auth/logout", { method: "POST" });
     } catch (error) {
-      console.error('Logout failed:', error);
+      console.error("Logout failed:", error);
     } finally {
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("user");
+      window.location.href = "/login";
     }
   }
 
   async getProfile() {
-    return this.request('/auth/profile');
+    return this.request("/auth/profile");
   }
 
   async getUserDetails() {
-    return this.request('/users/profile/details');
+    return this.request("/users/profile/complete");
   }
 
   async updateUser(id, userData) {
     return this.request(`/users/${id}`, {
-      method: 'PATCH',
+      method: "PATCH",
       body: JSON.stringify(userData),
     });
   }
 
   // User methods
-  async register(userData) {
-    return this.request('/users', {
-      method: 'POST',
-      body: JSON.stringify(userData),
+  async register(userData, photoFiles) {
+    const formData = new FormData();
+    formData.append("userData", JSON.stringify(userData));
+    
+    if (photoFiles && photoFiles.length > 0) {
+      photoFiles.forEach((file) => {
+        formData.append("photos", file);
+      });
+    }
+
+    // For multipart form data, don't set Content-Type header
+    // Let the browser set it automatically with the boundary
+    const headers = {};
+    const token = localStorage.getItem("accessToken");
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
+    return this.request("/users/register-with-photos", {
+      method: "POST",
+      headers,
+      body: formData,
     });
   }
 
   async getUsers() {
-    return this.request('/users');
+    return this.request("/users");
   }
 
   async getUser(id) {
@@ -130,38 +164,45 @@ class ApiService {
 
   async deleteUser(id) {
     return this.request(`/users/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
   }
 
   async searchUsers(query, userType, city) {
     const params = new URLSearchParams();
-    if (query) params.append('q', query);
-    if (userType) params.append('userType', userType);
-    if (city) params.append('city', city);
-    
+    if (query) params.append("q", query);
+    if (userType) params.append("userType", userType);
+    if (city) params.append("city", city);
+
     return this.request(`/users/search?${params.toString()}`);
   }
 
   async getServiceProviders(city, businessType) {
     const params = new URLSearchParams();
-    if (city) params.append('city', city);
-    if (businessType) params.append('businessType', businessType);
-    
+    if (city) params.append("city", city);
+    if (businessType) params.append("businessType", businessType);
+
     return this.request(`/users/service-providers?${params.toString()}`);
   }
 
   async getCustomers(city) {
     const params = new URLSearchParams();
-    if (city) params.append('city', city);
-    
+    if (city) params.append("city", city);
+
     return this.request(`/users/customers?${city}`);
   }
 
   // Message methods
-  async sendMessage(receiverId, content, type = 'text', fileUrl, fileName, fileSize) {
-    return this.request('/messages', {
-      method: 'POST',
+  async sendMessage(
+    receiverId,
+    content,
+    type = "text",
+    fileUrl,
+    fileName,
+    fileSize
+  ) {
+    return this.request("/messages", {
+      method: "POST",
       body: JSON.stringify({
         receiverId,
         content,
@@ -174,52 +215,58 @@ class ApiService {
   }
 
   async getConversations() {
-    return this.request('/messages/conversations');
+    return this.request("/messages/conversations");
   }
 
   async getConversationByParticipants(participantIds) {
-    return this.request(`/messages/conversations/by-participants?participants=${participantIds.join(',')}`);
+    return this.request(
+      `/messages/conversations/by-participants?participants=${participantIds.join(
+        ","
+      )}`
+    );
   }
 
   async getConversationMessages(conversationId, limit = 50, offset = 0) {
-    return this.request(`/messages/conversations/${conversationId}?limit=${limit}&offset=${offset}`);
+    return this.request(
+      `/messages/conversations/${conversationId}?limit=${limit}&offset=${offset}`
+    );
   }
 
   async markMessageAsRead(messageId) {
     return this.request(`/messages/${messageId}/read`, {
-      method: 'PATCH',
+      method: "PATCH",
     });
   }
 
   async markConversationAsRead(conversationId) {
     return this.request(`/messages/conversations/${conversationId}/read`, {
-      method: 'PATCH',
+      method: "PATCH",
     });
   }
 
   async deleteMessage(messageId) {
     return this.request(`/messages/${messageId}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
   }
 
   async editMessage(messageId, content) {
     return this.request(`/messages/${messageId}`, {
-      method: 'PATCH',
+      method: "PATCH",
       body: JSON.stringify({ content }),
     });
   }
 
   async getUnreadCount() {
-    return this.request('/messages/unread-count');
+    return this.request("/messages/unread-count");
   }
 
   // Update online status
   async updateOnlineStatus(isOnline) {
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
     if (user.id) {
       return this.request(`/users/${user.id}/online-status`, {
-        method: 'PATCH',
+        method: "PATCH",
         body: JSON.stringify({ isOnline }),
       });
     }

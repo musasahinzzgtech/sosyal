@@ -24,10 +24,10 @@ let UsersService = class UsersService {
     }
     async create(createUserDto) {
         const existingUser = await this.userModel.findOne({
-            email: createUserDto.email.toLowerCase()
+            email: createUserDto.email.toLowerCase(),
         });
         if (existingUser) {
-            throw new common_1.ConflictException('User with this email already exists');
+            throw new common_1.ConflictException("User with this email already exists");
         }
         const hashedPassword = await bcrypt.hash(createUserDto.password, 12);
         const createdUser = new this.userModel({
@@ -38,12 +38,16 @@ let UsersService = class UsersService {
         return createdUser.save();
     }
     async findAll() {
-        return this.userModel.find({ isActive: true }).select('-password -refreshToken');
+        return this.userModel
+            .find({ isActive: true })
+            .select("-password -refreshToken");
     }
     async findOne(id) {
-        const user = await this.userModel.findById(id).select('-password -refreshToken');
+        const user = await this.userModel
+            .findById(id)
+            .select("-password -refreshToken");
         if (!user) {
-            throw new common_1.NotFoundException('User not found');
+            throw new common_1.NotFoundException("User not found");
         }
         return user;
     }
@@ -51,16 +55,18 @@ let UsersService = class UsersService {
         return this.userModel.findOne({ email: email.toLowerCase() });
     }
     async update(id, updateUserDto) {
-        const user = await this.userModel.findByIdAndUpdate(id, updateUserDto, { new: true, runValidators: true }).select('-password -refreshToken');
+        const user = await this.userModel
+            .findByIdAndUpdate(id, updateUserDto, { new: true, runValidators: true })
+            .select("-password -refreshToken");
         if (!user) {
-            throw new common_1.NotFoundException('User not found');
+            throw new common_1.NotFoundException("User not found");
         }
         return user;
     }
     async remove(id) {
         const result = await this.userModel.findByIdAndDelete(id);
         if (!result) {
-            throw new common_1.NotFoundException('User not found');
+            throw new common_1.NotFoundException("User not found");
         }
     }
     async searchUsers(query, userType, city) {
@@ -69,13 +75,14 @@ let UsersService = class UsersService {
             searchQuery.userType = userType;
         }
         if (city) {
-            searchQuery.city = { $regex: city, $options: 'i' };
+            searchQuery.city = { $regex: city, $options: "i" };
         }
         if (query) {
             searchQuery.$text = { $search: query };
         }
-        return this.userModel.find(searchQuery)
-            .select('-password -refreshToken')
+        return this.userModel
+            .find(searchQuery)
+            .select("-password -refreshToken")
             .sort({ rating: -1, reviewCount: -1 })
             .limit(20);
     }
@@ -86,18 +93,23 @@ let UsersService = class UsersService {
         });
     }
     async getUserDetails(id) {
-        console.log('getUserDetails service called with ID:', id);
+        console.log("getUserDetails service called with ID:", id);
         if (!id) {
-            throw new common_1.NotFoundException('User ID is required');
+            throw new common_1.NotFoundException("User ID is required");
         }
-        const user = await this.userModel.findById(id)
-            .select('-password -refreshToken')
+        const user = await this.userModel
+            .findById(id)
+            .select("-password -refreshToken")
             .lean();
         if (!user) {
-            console.log('User not found with ID:', id);
-            throw new common_1.NotFoundException('User not found');
+            console.log("User not found with ID:", id);
+            throw new common_1.NotFoundException("User not found");
         }
-        console.log('User found:', { id: user._id, email: user.email, userType: user.userType });
+        console.log("User found:", {
+            id: user._id,
+            email: user.email,
+            userType: user.userType,
+        });
         const userDetails = {
             ...user,
             _id: user._id.toString(),
@@ -108,20 +120,15 @@ let UsersService = class UsersService {
             isOnline: user.isOnline || false,
             isVerified: user.isVerified || false,
             isActive: user.isActive !== undefined ? user.isActive : true,
-            experience: user.experience || 0,
-            businessName: user.businessName || '',
-            businessType: user.businessType || '',
-            services: user.services || '',
-            workingHours: user.workingHours || '',
-            priceRange: user.priceRange || '',
-            preferences: user.preferences || '',
-            phone: user.phone || '',
-            city: user.city || '',
+            services: user.services || "",
+            priceRange: user.priceRange || "",
+            phone: user.phone || "",
+            city: user.city || "",
             birthDate: user.birthDate || null,
             lastSeen: user.lastSeen || null,
             createdAt: user.createdAt || new Date(),
         };
-        console.log('Returning user details with ID field:', userDetails.id);
+        console.log("Returning user details with ID field:", userDetails.id);
         return userDetails;
     }
     async updateRefreshToken(id, refreshToken) {
@@ -133,41 +140,47 @@ let UsersService = class UsersService {
     async getServiceProviders(city, businessType) {
         let query = {
             userType: user_schema_1.UserType.ILAN_VEREN,
-            isActive: true
+            isActive: true,
         };
         if (city) {
-            query.city = { $regex: city, $options: 'i' };
+            query.city = { $regex: city, $options: "i" };
         }
         if (businessType) {
             query.businessType = businessType;
         }
-        return this.userModel.find(query)
-            .select('-password -refreshToken')
+        return this.userModel
+            .find(query)
+            .select("-password -refreshToken")
             .sort({ rating: -1, reviewCount: -1 });
     }
     async getCustomers(city) {
         let query = {
             userType: user_schema_1.UserType.MUSTERI,
-            isActive: true
+            isActive: true,
         };
         if (city) {
-            query.city = { $regex: city, $options: 'i' };
+            query.city = { $regex: city, $options: "i" };
         }
-        return this.userModel.find(query)
-            .select('-password -refreshToken')
+        return this.userModel
+            .find(query)
+            .select("-password -refreshToken")
             .sort({ createdAt: -1 });
     }
     async addPhoto(userId, photoUrl) {
-        const user = await this.userModel.findByIdAndUpdate(userId, { $push: { photos: photoUrl } }, { new: true, runValidators: true }).select('-password -refreshToken');
+        const user = await this.userModel
+            .findByIdAndUpdate(userId, { $push: { photos: photoUrl } }, { new: true, runValidators: true })
+            .select("-password -refreshToken");
         if (!user) {
-            throw new common_1.NotFoundException('User not found');
+            throw new common_1.NotFoundException("User not found");
         }
         return user;
     }
     async removePhoto(userId, photoUrl) {
-        const user = await this.userModel.findByIdAndUpdate(userId, { $pull: { photos: photoUrl } }, { new: true, runValidators: true }).select('-password -refreshToken');
+        const user = await this.userModel
+            .findByIdAndUpdate(userId, { $pull: { photos: photoUrl } }, { new: true, runValidators: true })
+            .select("-password -refreshToken");
         if (!user) {
-            throw new common_1.NotFoundException('User not found');
+            throw new common_1.NotFoundException("User not found");
         }
         return user;
     }

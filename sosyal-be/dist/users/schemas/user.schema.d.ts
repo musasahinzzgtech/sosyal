@@ -1,16 +1,8 @@
-import { Document, Types } from 'mongoose';
+import { Document, Types } from "mongoose";
 export type UserDocument = User & Document;
 export declare enum UserType {
     MUSTERI = "musteri",
     ILAN_VEREN = "ilan-veren"
-}
-export declare enum BusinessType {
-    SPA_MASAJ = "Spa & Masaj",
-    GUZELLIK_SALONU = "G\u00FCzellik Salonu",
-    FITNESS_SPOR = "Fitness & Spor",
-    SAGLIK_TERAPI = "Sa\u011Fl\u0131k & Terapi",
-    EGELENCE_DANS = "E\u011Flence & Dans",
-    DİGER = "Di\u011Fer"
 }
 export declare class User extends Document {
     _id: Types.ObjectId;
@@ -22,12 +14,11 @@ export declare class User extends Document {
     city: string;
     birthDate: Date;
     userType: UserType;
-    preferences?: string;
-    businessName?: string;
-    businessType?: BusinessType;
-    experience?: number;
+    height?: number;
+    weight?: number;
+    age?: number;
+    skinColor?: string;
     services?: string;
-    workingHours?: string;
     priceRange?: string;
     photos?: string[];
     isOnline: boolean;

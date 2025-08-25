@@ -22,8 +22,11 @@ export declare class UsersController {
         controller: string;
         timestamp: string;
     };
-    create(createUserDto: CreateUserDto, photos?: any): Promise<import("./schemas/user.schema").User>;
-    registerWithPhotos(userDataString: string, photos?: any): Promise<import("./schemas/user.schema").User>;
+    create(createUserDto: CreateUserDto, photos?: any[]): Promise<import("./schemas/user.schema").User>;
+    registerWithPhotos(userDataString: string, photos?: any[]): Promise<{
+        message: string;
+        user: any;
+    }>;
     findAll(): Promise<import("./schemas/user.schema").User[]>;
     searchUsers(query: string, userType: UserType, city: string): Promise<import("./schemas/user.schema").User[]>;
     getServiceProviders(city: string, businessType: string): Promise<import("./schemas/user.schema").User[]>;

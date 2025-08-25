@@ -1,20 +1,11 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { Document, Types } from "mongoose";
 
 export type UserDocument = User & Document;
 
 export enum UserType {
-  MUSTERI = 'musteri',
-  ILAN_VEREN = 'ilan-veren',
-}
-
-export enum BusinessType {
-  SPA_MASAJ = 'Spa & Masaj',
-  GUZELLIK_SALONU = 'Güzellik Salonu',
-  FITNESS_SPOR = 'Fitness & Spor',
-  SAGLIK_TERAPI = 'Sağlık & Terapi',
-  EGELENCE_DANS = 'Eğlence & Dans',
-  DİGER = 'Diğer',
+  MUSTERI = "musteri",
+  ILAN_VEREN = "ilan-veren",
 }
 
 @Schema({ timestamps: true })
@@ -30,7 +21,7 @@ export class User extends Document {
   @Prop({ required: true, unique: true, lowercase: true })
   email: string;
 
-  @Prop({ required: true })
+  @Prop({ required: false })
   phone: string;
 
   @Prop({ required: true })
@@ -45,25 +36,22 @@ export class User extends Document {
   @Prop({ required: true, enum: UserType })
   userType: UserType;
 
-  // Customer specific fields
+  // Physical attributes
+  @Prop({ min: 100, max: 250 })
+  height?: number;
+
+  @Prop({ min: 30, max: 200 })
+  weight?: number;
+
+  @Prop({ min: 18, max: 100 })
+  age?: number;
+
   @Prop()
-  preferences?: string;
+  skinColor?: string;
 
   // Service provider specific fields
   @Prop()
-  businessName?: string;
-
-  @Prop({ enum: BusinessType })
-  businessType?: BusinessType;
-
-  @Prop()
-  experience?: number;
-
-  @Prop()
   services?: string;
-
-  @Prop()
-  workingHours?: string;
 
   @Prop()
   priceRange?: string;
@@ -103,12 +91,11 @@ export class User extends Document {
 export const UserSchema = SchemaFactory.createForClass(User);
 
 // Index for search functionality
-UserSchema.index({ 
-  firstName: 'text', 
-  lastName: 'text', 
-  city: 'text', 
-  businessName: 'text',
-  services: 'text' 
+UserSchema.index({
+  firstName: "text",
+  lastName: "text",
+  city: "text",
+  services: "text",
 });
 
 // Compound index for user type and city

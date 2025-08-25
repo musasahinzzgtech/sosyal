@@ -10,12 +10,13 @@ import {
   UseGuards,
   Request,
   UseInterceptors,
-  UploadedFile,
+  UploadedFiles,
   ParseFilePipe,
   MaxFileSizeValidator,
   FileTypeValidator,
+  BadRequestException,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { UsersService } from './users.service';
@@ -58,7 +59,7 @@ export class UsersController {
   )
   async uploadPhoto(
     @Request() req,
-    @UploadedFile(
+    @UploadedFiles(
       new ParseFilePipe({
         validators: [
           new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), // 5MB
@@ -97,7 +98,7 @@ export class UsersController {
 
   @Post()
   @UseInterceptors(
-    FileInterceptor('photos', {
+    FilesInterceptor('photos', 10, {
       storage: diskStorage({
         destination: './uploads/photos',
         filename: (req, file, cb) => {
@@ -112,23 +113,12 @@ export class UsersController {
   )
   async create(
     @Body() createUserDto: CreateUserDto,
-    @UploadedFile() photos?: any,
+    @UploadedFiles() photos?: any[],
   ) {
     // Handle photo uploads if provided
     let photoUrls: string[] = [];
-    if (photos) {
-      // If single photo, convert to array
-      if (!Array.isArray(photos)) {
-        photos = [photos];
-      }
-      
-      // Process each photo
-      for (const photo of photos) {
-        if (photo) {
-          const photoUrl = `/uploads/photos/${photo.filename}`;
-          photoUrls.push(photoUrl);
-        }
-      }
+    if (photos && photos.length > 0) {
+      photoUrls = photos.map(photo => `/uploads/photos/${photo.filename}`);
     }
 
     // Add photo URLs to user data
@@ -142,7 +132,7 @@ export class UsersController {
 
   @Post('register-with-photos')
   @UseInterceptors(
-    FileInterceptor('photos', {
+    FilesInterceptor('photos', 10, {
       storage: diskStorage({
         destination: './uploads/photos',
         filename: (req, file, cb) => {
@@ -157,27 +147,39 @@ export class UsersController {
   )
   async registerWithPhotos(
     @Body('userData') userDataString: string,
-    @UploadedFile() photos?: any,
+    @UploadedFiles() photos?: any[],
   ) {
     try {
       // Parse user data from string
-      const createUserDto = JSON.parse(userDataString);
+      const userData = JSON.parse(userDataString);
       
+      // Validate required fields
+      if (!userData.firstName || !userData.lastName || !userData.email || !userData.password || !userData.city || !userData.birthDate || !userData.userType) {
+        throw new BadRequestException('Missing required fields');
+      }
+
+      // Map frontend fields to backend DTO
+      const createUserDto: CreateUserDto = {
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        email: userData.email,
+        phone: userData.phone || '',
+        password: userData.password,
+        city: userData.city,
+        birthDate: userData.birthDate,
+        height: userData.height ? parseInt(userData.height) : undefined,
+        weight: userData.weight ? parseFloat(userData.weight) : undefined,
+        age: userData.age ? parseInt(userData.age) : undefined,
+        skinColor: userData.skinColor || undefined,
+        userType: userData.userType === 'musteri' ? UserType.MUSTERI : UserType.ILAN_VEREN,
+        services: userData.services || '',
+        priceRange: userData.priceRange || '',
+      };
+
       // Handle photo uploads if provided
       let photoUrls: string[] = [];
-      if (photos) {
-        // If single photo, convert to array
-        if (!Array.isArray(photos)) {
-          photos = [photos];
-        }
-        
-        // Process each photo
-        for (const photo of photos) {
-          if (photo) {
-            const photoUrl = `/uploads/photos/${photo.filename}`;
-            photoUrls.push(photoUrl);
-          }
-        }
+      if (photos && photos.length > 0) {
+        photoUrls = photos.map(photo => `/uploads/photos/${photo.filename}`);
       }
 
       // Add photo URLs to user data
@@ -186,9 +188,21 @@ export class UsersController {
         photos: photoUrls
       };
 
-      return this.usersService.create(userDataWithPhotos);
+      console.log('Creating user with data:', userDataWithPhotos);
+      const createdUser = await this.usersService.create(userDataWithPhotos);
+      
+      // Return user data without password
+      const { password, ...userWithoutPassword } = createdUser.toObject();
+      return {
+        message: 'User registered successfully',
+        user: userWithoutPassword
+      };
     } catch (error) {
-      throw new Error('Invalid user data format');
+      console.error('Registration error:', error);
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException('Invalid user data format or registration failed');
     }
   }
 
@@ -232,7 +246,8 @@ export class UsersController {
     @Request() req,
   ) {
     // Ensure user can only update their own profile
-    if (req.user.id !== id) {
+    if (req.user.id.toString() !== id.toString()) {
+      console.log('Unauthorized to update this profile', req.user.id, id);
       throw new Error('Unauthorized to update this profile');
     }
     return this.usersService.update(id, updateUserDto);

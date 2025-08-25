@@ -55,16 +55,8 @@ let UsersController = class UsersController {
     }
     async create(createUserDto, photos) {
         let photoUrls = [];
-        if (photos) {
-            if (!Array.isArray(photos)) {
-                photos = [photos];
-            }
-            for (const photo of photos) {
-                if (photo) {
-                    const photoUrl = `/uploads/photos/${photo.filename}`;
-                    photoUrls.push(photoUrl);
-                }
-            }
+        if (photos && photos.length > 0) {
+            photoUrls = photos.map(photo => `/uploads/photos/${photo.filename}`);
         }
         const userDataWithPhotos = {
             ...createUserDto,
@@ -74,27 +66,48 @@ let UsersController = class UsersController {
     }
     async registerWithPhotos(userDataString, photos) {
         try {
-            const createUserDto = JSON.parse(userDataString);
+            const userData = JSON.parse(userDataString);
+            if (!userData.firstName || !userData.lastName || !userData.email || !userData.password || !userData.city || !userData.birthDate || !userData.userType) {
+                throw new common_1.BadRequestException('Missing required fields');
+            }
+            const createUserDto = {
+                firstName: userData.firstName,
+                lastName: userData.lastName,
+                email: userData.email,
+                phone: userData.phone || '',
+                password: userData.password,
+                city: userData.city,
+                birthDate: userData.birthDate,
+                height: userData.height ? parseInt(userData.height) : undefined,
+                weight: userData.weight ? parseFloat(userData.weight) : undefined,
+                age: userData.age ? parseInt(userData.age) : undefined,
+                skinColor: userData.skinColor || undefined,
+                userType: userData.userType === 'musteri' ? user_schema_1.UserType.MUSTERI : user_schema_1.UserType.ILAN_VEREN,
+                services: userData.services || '',
+                priceRange: userData.priceRange || '',
+            };
             let photoUrls = [];
-            if (photos) {
-                if (!Array.isArray(photos)) {
-                    photos = [photos];
-                }
-                for (const photo of photos) {
-                    if (photo) {
-                        const photoUrl = `/uploads/photos/${photo.filename}`;
-                        photoUrls.push(photoUrl);
-                    }
-                }
+            if (photos && photos.length > 0) {
+                photoUrls = photos.map(photo => `/uploads/photos/${photo.filename}`);
             }
             const userDataWithPhotos = {
                 ...createUserDto,
                 photos: photoUrls
             };
-            return this.usersService.create(userDataWithPhotos);
+            console.log('Creating user with data:', userDataWithPhotos);
+            const createdUser = await this.usersService.create(userDataWithPhotos);
+            const { password, ...userWithoutPassword } = createdUser.toObject();
+            return {
+                message: 'User registered successfully',
+                user: userWithoutPassword
+            };
         }
         catch (error) {
-            throw new Error('Invalid user data format');
+            console.error('Registration error:', error);
+            if (error instanceof common_1.BadRequestException) {
+                throw error;
+            }
+            throw new common_1.BadRequestException('Invalid user data format or registration failed');
         }
     }
     findAll() {
@@ -113,7 +126,8 @@ let UsersController = class UsersController {
         return this.usersService.findOne(id);
     }
     update(id, updateUserDto, req) {
-        if (req.user.id !== id) {
+        if (req.user.id.toString() !== id.toString()) {
+            console.log('Unauthorized to update this profile', req.user.id, id);
             throw new Error('Unauthorized to update this profile');
         }
         return this.usersService.update(id, updateUserDto);
@@ -156,7 +170,7 @@ __decorate([
         }),
     })),
     __param(0, (0, common_1.Request)()),
-    __param(1, (0, common_1.UploadedFile)(new common_1.ParseFilePipe({
+    __param(1, (0, common_1.UploadedFiles)(new common_1.ParseFilePipe({
         validators: [
             new common_1.MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
             new common_1.FileTypeValidator({ fileType: '.(jpg|jpeg|png|gif)' }),
@@ -189,7 +203,7 @@ __decorate([
 ], UsersController.prototype, "health", null);
 __decorate([
     (0, common_1.Post)(),
-    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('photos', {
+    (0, common_1.UseInterceptors)((0, platform_express_1.FilesInterceptor)('photos', 10, {
         storage: (0, multer_1.diskStorage)({
             destination: './uploads/photos',
             filename: (req, file, cb) => {
@@ -202,14 +216,14 @@ __decorate([
         }),
     })),
     __param(0, (0, common_1.Body)()),
-    __param(1, (0, common_1.UploadedFile)()),
+    __param(1, (0, common_1.UploadedFiles)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [create_user_dto_1.CreateUserDto, Object]),
+    __metadata("design:paramtypes", [create_user_dto_1.CreateUserDto, Array]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "create", null);
 __decorate([
     (0, common_1.Post)('register-with-photos'),
-    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('photos', {
+    (0, common_1.UseInterceptors)((0, platform_express_1.FilesInterceptor)('photos', 10, {
         storage: (0, multer_1.diskStorage)({
             destination: './uploads/photos',
             filename: (req, file, cb) => {
@@ -222,9 +236,9 @@ __decorate([
         }),
     })),
     __param(0, (0, common_1.Body)('userData')),
-    __param(1, (0, common_1.UploadedFile)()),
+    __param(1, (0, common_1.UploadedFiles)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:paramtypes", [String, Array]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "registerWithPhotos", null);
 __decorate([

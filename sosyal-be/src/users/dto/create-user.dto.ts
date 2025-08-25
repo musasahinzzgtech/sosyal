@@ -1,5 +1,16 @@
-import { IsEmail, IsString, IsEnum, IsOptional, IsNumber, IsArray, MinLength, IsDateString } from 'class-validator';
-import { UserType, BusinessType } from '../schemas/user.schema';
+import {
+  IsEmail,
+  IsString,
+  IsEnum,
+  IsOptional,
+  IsArray,
+  MinLength,
+  IsDateString,
+  IsNumber,
+  Min,
+  Max,
+} from "class-validator";
+import { UserType } from "../schemas/user.schema";
 
 export class CreateUserDto {
   @IsString()
@@ -11,8 +22,9 @@ export class CreateUserDto {
   @IsEmail()
   email: string;
 
+  @IsOptional()
   @IsString()
-  phone: string;
+  phone?: string;
 
   @IsString()
   @MinLength(8)
@@ -24,34 +36,36 @@ export class CreateUserDto {
   @IsDateString()
   birthDate: string;
 
-  @IsEnum(UserType)
-  userType: UserType;
+  @IsOptional()
+  @IsNumber()
+  @Min(18)
+  @Max(100)
+  age?: number;
 
-  // Customer specific fields
+  // Physical attributes
+  @IsOptional()
+  @IsNumber()
+  @Min(100)
+  @Max(250)
+  height?: number;
+
+  @IsOptional() 
+  @IsNumber()
+  @Min(30)
+  @Max(200)
+  weight?: number;
+
   @IsOptional()
   @IsString()
-  preferences?: string;
+  skinColor?: string;
+
+  @IsEnum(UserType)
+  userType: UserType;
 
   // Service provider specific fields
   @IsOptional()
   @IsString()
-  businessName?: string;
-
-  @IsOptional()
-  @IsEnum(BusinessType)
-  businessType?: BusinessType;
-
-  @IsOptional()
-  @IsNumber()
-  experience?: number;
-
-  @IsOptional()
-  @IsString()
   services?: string;
-
-  @IsOptional()
-  @IsString()
-  workingHours?: string;
 
   @IsOptional()
   @IsString()
