@@ -17,7 +17,7 @@ class ApiService {
   // Generic request method
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
-    
+
     // For multipart form data, don't set Content-Type header
     let headers = {};
     if (options.body instanceof FormData) {
@@ -132,7 +132,7 @@ class ApiService {
   async register(userData, photoFiles) {
     const formData = new FormData();
     formData.append("userData", JSON.stringify(userData));
-    
+
     if (photoFiles && photoFiles.length > 0) {
       photoFiles.forEach((file) => {
         formData.append("photos", file);
@@ -151,6 +151,13 @@ class ApiService {
       method: "POST",
       headers,
       body: formData,
+    });
+  }
+
+  async removePhoto(photoUrl) {
+    return this.request(`/users/remove-photo`, {
+      method: "DELETE",
+      body: JSON.stringify({ url: photoUrl }),
     });
   }
 
@@ -177,10 +184,9 @@ class ApiService {
     return this.request(`/users/search?${params.toString()}`);
   }
 
-  async getServiceProviders(city, businessType) {
+  async getServiceProviders(city) {
     const params = new URLSearchParams();
     if (city) params.append("city", city);
-    if (businessType) params.append("businessType", businessType);
 
     return this.request(`/users/service-providers?${params.toString()}`);
   }

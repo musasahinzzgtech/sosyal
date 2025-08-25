@@ -166,10 +166,7 @@ export class UsersService {
     await this.userModel.findByIdAndUpdate(id, { refreshToken: null });
   }
 
-  async getServiceProviders(
-    city?: string,
-    businessType?: string
-  ): Promise<User[]> {
+  async getServiceProviders(city?: string): Promise<User[]> {
     let query: any = {
       userType: UserType.ILAN_VEREN,
       isActive: true,
@@ -177,10 +174,6 @@ export class UsersService {
 
     if (city) {
       query.city = { $regex: city, $options: "i" };
-    }
-
-    if (businessType) {
-      query.businessType = businessType;
     }
 
     return this.userModel

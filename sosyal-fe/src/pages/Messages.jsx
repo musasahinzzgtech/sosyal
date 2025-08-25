@@ -914,7 +914,7 @@ const Messages = () => {
                         {/* Avatar */}
                         <div className="relative">
                           <img
-                            src={`http://localhost:3001/${chat.avatar}`}
+                            src={`http://localhost:3001${chat.avatar}`}
                             alt={chat.name}
                             className="w-12 h-12 rounded-full object-cover"
                           />
@@ -959,7 +959,7 @@ const Messages = () => {
                   <div className="p-4 border-b border-gray-200 bg-white">
                     <div className="flex items-center space-x-3">
                       <img
-                        src={selectedChat.avatar}
+                        src={`http://localhost:3001${selectedChat.avatar}`}
                         alt={selectedChat.name}
                         className="w-10 h-10 rounded-full object-cover"
                       />

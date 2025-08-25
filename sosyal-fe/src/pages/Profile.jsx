@@ -19,22 +19,9 @@ const Profile = () => {
     age: "",
     skinColor: "",
     preferences: "",
-    businessName: "",
-    businessType: "",
-    experience: "",
     services: "",
-    workingHours: "",
     priceRange: "",
   });
-
-  const businessTypes = [
-    "Spa & Masaj",
-    "Güzellik Salonu",
-    "Fitness & Spor",
-    "Sağlık & Terapi",
-    "Eğlence & Dans",
-    "Diğer",
-  ];
 
   const skinColorOptions = [
     { label: "Sarışın", value: "sarışın" },
@@ -80,11 +67,7 @@ const Profile = () => {
         age: user.age || "",
         skinColor: user.skinColor || "",
         preferences: user.preferences || "",
-        businessName: user.businessName || "",
-        businessType: user.businessType || "",
-        experience: user.experience || "",
         services: user.services || "",
-        workingHours: user.workingHours || "",
         priceRange: user.priceRange || "",
       });
     }
@@ -150,11 +133,7 @@ const Profile = () => {
           preferences: formData.preferences,
         }),
         ...(user.userType === "ilan-veren" && {
-          businessName: formData.businessName,
-          businessType: formData.businessType,
-          experience: formData.experience ? parseInt(formData.experience) : 0,
           services: formData.services,
-          workingHours: formData.workingHours,
           priceRange: formData.priceRange,
         }),
       };
@@ -201,11 +180,7 @@ const Profile = () => {
         age: user.age || "",
         skinColor: user.skinColor || "",
         preferences: user.preferences || "",
-        businessName: user.businessName || "",
-        businessType: user.businessType || "",
-        experience: user.experience || "",
         services: user.services || "",
-        workingHours: user.workingHours || "",
         priceRange: user.priceRange || "",
       });
     }
@@ -317,7 +292,7 @@ const Profile = () => {
   }
 
   // Show loading state while fetching user details
-  if (loading && !user.photos && !user.businessName && !user.preferences) {
+  if (loading && !user.photos && !user.preferences) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -921,8 +896,8 @@ const Profile = () => {
                     >
                       <option value="">Ten rengi seçin</option>
                       {skinColorOptions.map((color) => (
-                        <option key={color} value={color}>
-                          {color}
+                        <option key={color.value} value={color.value}>
+                          {color.label}
                         </option>
                       ))}
                     </select>
@@ -1105,47 +1080,10 @@ const Profile = () => {
                   </div>
                   <div className="text-sm text-purple-700">Değerlendirme</div>
                 </div>
-
-                <div className="bg-orange-50 rounded-lg p-4 text-center border border-orange-200">
-                  <div className="text-2xl font-bold text-orange-600">
-                    {user.userType === "ilan-veren" && user.experience
-                      ? user.experience
-                      : 0}
-                  </div>
-                  <div className="text-sm text-orange-700">Yıl Deneyim</div>
-                </div>
               </div>
 
               {/* Additional Info */}
               <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                {user.userType === "ilan-veren" && user.businessType && (
-                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                    <h4 className="font-medium text-gray-900 mb-2">
-                      İşletme Bilgileri
-                    </h4>
-                    <div className="space-y-2 text-sm text-gray-600">
-                      <div className="flex justify-between">
-                        <span>İşletme Türü:</span>
-                        <span className="font-medium">{user.businessType}</span>
-                      </div>
-                      {user.priceRange && (
-                        <div className="flex justify-between">
-                          <span>Fiyat Aralığı:</span>
-                          <span className="font-medium">{user.priceRange}</span>
-                        </div>
-                      )}
-                      {user.workingHours && (
-                        <div className="flex justify-between">
-                          <span>Çalışma Saatleri:</span>
-                          <span className="font-medium">
-                            {user.workingHours}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
                 {user.userType === "musteri" && user.preferences && (
                   <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                     <h4 className="font-medium text-gray-900 mb-2">

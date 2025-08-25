@@ -18,14 +18,8 @@ const Register = () => {
     height: "",
     weight: "",
     age: "",
-    skinColor: "", // Added skin color field
-    // Müşteri specific fields
-    // İlan Veren specific fields
-    businessName: "",
-    businessType: "",
-    experience: "",
+    skinColor: "",
     services: "",
-    workingHours: "",
     priceRange: "",
   });
 
@@ -219,11 +213,11 @@ const Register = () => {
     } catch (error) {
       console.error("Registration failed:", error);
       let errorMessage = "Kayıt sırasında bir hata oluştu.";
-      
+
       if (error.message) {
         errorMessage += " " + error.message;
       }
-      
+
       alert(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -1020,9 +1014,11 @@ const Register = () => {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                       placeholder="175"
                     />
-                    <p className="text-xs text-gray-500 mt-1">Santimetre cinsinden (opsiyonel)</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Santimetre cinsinden (opsiyonel)
+                    </p>
                   </div>
-                  
+
                   <div>
                     <label
                       htmlFor="weight"
@@ -1042,7 +1038,9 @@ const Register = () => {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                       placeholder="70"
                     />
-                    <p className="text-xs text-gray-500 mt-1">Kilogram cinsinden (opsiyonel)</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Kilogram cinsinden (opsiyonel)
+                    </p>
                   </div>
 
                   <div>
@@ -1064,7 +1062,9 @@ const Register = () => {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                       placeholder="25"
                     />
-                    <p className="text-xs text-gray-500 mt-1">Yaşınız (opsiyonel)</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Yaşınız (opsiyonel)
+                    </p>
                   </div>
 
                   <div>
@@ -1113,7 +1113,7 @@ const Register = () => {
                       placeholder="Hangi hizmetleri sunuyorsunuz? Detaylı açıklayın..."
                     />
                   </div>
-                  
+
                   <div>
                     <label
                       htmlFor="priceRange"

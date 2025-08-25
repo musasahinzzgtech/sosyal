@@ -16,7 +16,7 @@ export declare class UsersService {
     getUserDetails(id: string): Promise<User>;
     updateRefreshToken(id: string, refreshToken: string): Promise<void>;
     removeRefreshToken(id: string): Promise<void>;
-    getServiceProviders(city?: string, businessType?: string): Promise<User[]>;
+    getServiceProviders(city?: string): Promise<User[]>;
     getCustomers(city?: string): Promise<User[]>;
     addPhoto(userId: string, photoUrl: string): Promise<User>;
     removePhoto(userId: string, photoUrl: string): Promise<User>;

@@ -137,16 +137,13 @@ let UsersService = class UsersService {
     async removeRefreshToken(id) {
         await this.userModel.findByIdAndUpdate(id, { refreshToken: null });
     }
-    async getServiceProviders(city, businessType) {
+    async getServiceProviders(city) {
         let query = {
             userType: user_schema_1.UserType.ILAN_VEREN,
             isActive: true,
         };
         if (city) {
             query.city = { $regex: city, $options: "i" };
-        }
-        if (businessType) {
-            query.businessType = businessType;
         }
         return this.userModel
             .find(query)
