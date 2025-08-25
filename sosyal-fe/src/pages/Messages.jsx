@@ -2,6 +2,58 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { useLocation } from "react-router-dom";
 
+// Add custom CSS for animations
+const customStyles = `
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .animate-fade-in {
+    animation: fade-in 0.3s ease-out;
+  }
+`;
+
+// Inject styles
+if (typeof document !== "undefined") {
+  const styleSheet = document.createElement("style");
+  styleSheet.type = "text/css";
+  styleSheet.innerText = customStyles;
+  document.head.appendChild(styleSheet);
+}
+
+// Skeleton Components for better loading UX
+const ChatSkeleton = () => (
+  <div className="p-4 animate-pulse">
+    <div className="flex items-center space-x-3">
+      <div className="w-12 h-12 bg-gray-300 rounded-full"></div>
+      <div className="flex-1">
+        <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
+        <div className="h-3 bg-gray-300 rounded w-1/2"></div>
+      </div>
+    </div>
+  </div>
+);
+
+const MessageSkeleton = ({ isOwn = false }) => (
+  <div className={`flex ${isOwn ? "justify-end" : "justify-start"} mb-4`}>
+    <div
+      className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg animate-pulse ${
+        isOwn ? "bg-gray-300" : "bg-gray-200"
+      }`}
+    >
+      <div className="h-4 bg-gray-400 rounded w-32 mb-2"></div>
+      <div className="h-3 bg-gray-400 rounded w-16"></div>
+    </div>
+  </div>
+);
+
 const Messages = () => {
   const { user } = useAuth();
   const location = useLocation();
@@ -12,6 +64,7 @@ const Messages = () => {
   const [messages, setMessages] = useState([]);
   console.log("Messages:", messages);
   const [loading, setLoading] = useState(true);
+  const [messagesLoading, setMessagesLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const [typingUsers, setTypingUsers] = useState(new Set());
@@ -215,83 +268,94 @@ const Messages = () => {
     }
   }, [selectedChat]);
 
-  // Get message status icon
+  // Get message status icon with modern animations
   const getMessageStatusIcon = (messageId) => {
     const status = messageStatus[messageId];
     if (!status) return null;
 
+    const baseClasses = "w-3 h-3 transition-all duration-300";
+
     switch (status) {
       case "sending":
         return (
-          <svg
-            className="w-3 h-3 text-gray-400 animate-spin"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            ></circle>
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-            ></path>
-          </svg>
+          <div className="flex items-center space-x-1">
+            <svg
+              className={`${baseClasses} text-gray-400 animate-spin`}
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
+            </svg>
+            <span className="text-xs text-gray-400">Gönderiliyor...</span>
+          </div>
         );
       case "sent":
         return (
-          <svg
-            className="w-3 h-3 text-gray-400"
-            fill="currentColor"
-            viewBox="0 0 20 20"
-          >
-            <path
-              fillRule="evenodd"
-              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-              clipRule="evenodd"
-            />
-          </svg>
+          <div className="flex items-center space-x-1">
+            <svg
+              className={`${baseClasses} text-gray-400`}
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fillRule="evenodd"
+                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </div>
         );
       case "delivered":
         return (
-          <svg
-            className="w-3 h-3 text-blue-400"
-            fill="currentColor"
-            viewBox="0 0 20 20"
-          >
-            <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
-            <path
-              fillRule="evenodd"
-              d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v9a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z"
-              clipRule="evenodd"
-            />
-          </svg>
+          <div className="flex items-center space-x-1">
+            <svg
+              className={`${baseClasses} text-blue-400`}
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+              <path
+                fillRule="evenodd"
+                d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v9a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </div>
         );
       case "read":
         return (
-          <svg
-            className="w-3 h-3 text-blue-500"
-            fill="currentColor"
-            viewBox="0 0 20 20"
-          >
-            <path
-              fillRule="evenodd"
-              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-              clipRule="evenodd"
-            />
-          </svg>
+          <div className="flex items-center space-x-1">
+            <svg
+              className={`${baseClasses} text-blue-500`}
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fillRule="evenodd"
+                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </div>
         );
       default:
         return null;
     }
   };
 
-  // Format typing users display
+  // Format typing users display with modern animations
   const getTypingIndicator = () => {
     if (typingUsers.size === 0) return null;
 
@@ -306,19 +370,25 @@ const Messages = () => {
     });
 
     return (
-      <div className="flex items-center space-x-2 text-sm text-gray-500 italic">
-        <div className="flex space-x-1">
-          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-          <div
-            className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-            style={{ animationDelay: "0.1s" }}
-          ></div>
-          <div
-            className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-            style={{ animationDelay: "0.2s" }}
-          ></div>
+      <div className="flex justify-start mb-4">
+        <div className="bg-white border border-gray-200 rounded-2xl px-4 py-3 shadow-sm">
+          <div className="flex items-center space-x-3">
+            <div className="flex space-x-1">
+              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+              <div
+                className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                style={{ animationDelay: "0.1s" }}
+              ></div>
+              <div
+                className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                style={{ animationDelay: "0.2s" }}
+              ></div>
+            </div>
+            <span className="text-sm text-gray-600 font-medium">
+              {typingNames.join(", ")} yazıyor...
+            </span>
+          </div>
         </div>
-        <span>{typingNames.join(", ")} yazıyor...</span>
       </div>
     );
   };
@@ -330,11 +400,12 @@ const Messages = () => {
     }
   };
 
-  // Enhanced message loading with pagination
+  // Enhanced message loading with pagination and better loading states
   const loadMessages = async (conversationId, limit = 50, offset = 0) => {
     if (!conversationId) return;
 
     try {
+      setMessagesLoading(true);
       console.log("Loading messages for conversation:", conversationId);
       const apiService = (await import("../services/api")).default;
       const conversationMessages = await apiService.getConversationMessages(
@@ -393,6 +464,8 @@ const Messages = () => {
     } catch (error) {
       console.error("Failed to load messages:", error);
       setError("Mesajlar yüklenemedi");
+    } finally {
+      setMessagesLoading(false);
     }
   };
 
@@ -661,8 +734,11 @@ const Messages = () => {
     };
   }, []);
 
+  console.log("selectedChat", selectedChat);
   // Start new conversation
   const startNewConversation = async (targetUser) => {
+
+    // start new conversation ve duplicate mesaj göndermede sorun kaldı
     try {
       setLoading(true);
       console.log("Starting new conversation with:", targetUser);
@@ -747,10 +823,55 @@ const Messages = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Sohbetler yükleniyor...</p>
+      <div className="min-h-screen bg-gray-50">
+        {/* Header Skeleton */}
+        <div className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex items-center justify-between">
+              <div className="animate-pulse">
+                <div className="h-8 bg-gray-300 rounded w-32 mb-2"></div>
+                <div className="h-4 bg-gray-300 rounded w-48"></div>
+              </div>
+              <div className="h-10 bg-gray-300 rounded w-24"></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Chat Container Skeleton */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div className="flex h-[600px]">
+              {/* Left Sidebar Skeleton */}
+              <div className="w-80 border-r border-gray-200 bg-gray-50">
+                <div className="p-4 border-b border-gray-200 bg-white">
+                  <div className="h-10 bg-gray-300 rounded"></div>
+                </div>
+                <div className="overflow-y-auto h-full">
+                  {[...Array(6)].map((_, i) => (
+                    <ChatSkeleton key={i} />
+                  ))}
+                </div>
+              </div>
+
+              {/* Right Side Skeleton */}
+              <div className="flex-1 flex flex-col">
+                <div className="p-4 border-b border-gray-200 bg-white">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-gray-300 rounded-full"></div>
+                    <div className="animate-pulse">
+                      <div className="h-4 bg-gray-300 rounded w-24 mb-1"></div>
+                      <div className="h-3 bg-gray-300 rounded w-16"></div>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex-1 bg-gray-50 p-4">
+                  {[...Array(4)].map((_, i) => (
+                    <MessageSkeleton key={i} isOwn={i % 2 === 0} />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -759,10 +880,10 @@ const Messages = () => {
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <div className="text-center max-w-md mx-auto px-4">
+          <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <svg
-              className="w-8 h-8 text-red-500"
+              className="w-10 h-10 text-red-500"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -775,14 +896,28 @@ const Messages = () => {
               />
             </svg>
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Hata</h3>
-          <p className="text-gray-500 mb-4">{error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200"
-          >
-            Tekrar Dene
-          </button>
+          <h3 className="text-xl font-semibold text-gray-900 mb-3">
+            Bir Hata Oluştu
+          </h3>
+          <p className="text-gray-600 mb-6 leading-relaxed">{error}</p>
+          <div className="space-y-3">
+            <button
+              onClick={() => {
+                setError(null);
+                setLoading(true);
+                loadConversations();
+              }}
+              className="w-full px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all duration-200 font-medium shadow-sm hover:shadow-md"
+            >
+              Tekrar Dene
+            </button>
+            <button
+              onClick={() => window.location.reload()}
+              className="w-full px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all duration-200 font-medium"
+            >
+              Sayfayı Yenile
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -909,7 +1044,10 @@ const Messages = () => {
 
               {/* Chat List */}
               <div className="overflow-y-auto h-full">
-                {chats.length === 0 ? (
+                {loading ? (
+                  // Show skeleton loaders while loading
+                  [...Array(6)].map((_, i) => <ChatSkeleton key={i} />)
+                ) : chats.length === 0 ? (
                   <div className="p-8 text-center">
                     <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
                       <svg
@@ -1058,7 +1196,14 @@ const Messages = () => {
 
                   {/* Messages */}
                   <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
-                    {messages.length === 0 ? (
+                    {messagesLoading ? (
+                      // Show skeleton loaders while loading messages
+                      <div className="space-y-4">
+                        {[...Array(4)].map((_, i) => (
+                          <MessageSkeleton key={i} isOwn={i % 2 === 0} />
+                        ))}
+                      </div>
+                    ) : messages.length === 0 ? (
                       <div className="text-center py-8">
                         <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
                           <svg
@@ -1084,23 +1229,29 @@ const Messages = () => {
                       </div>
                     ) : (
                       <>
-                        {messages.map((message) => (
+                        {messages.map((message, index) => (
                           <div
                             key={message.id}
                             className={`flex ${
                               message.sender === "me"
                                 ? "justify-end"
                                 : "justify-start"
-                            }`}
+                            } animate-fade-in`}
+                            style={{
+                              animationDelay: `${index * 0.1}s`,
+                              animationFillMode: "both",
+                            }}
                           >
                             <div
-                              className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                              className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl shadow-sm transition-all duration-200 hover:shadow-md ${
                                 message.sender === "me"
-                                  ? "bg-blue-500 text-white"
-                                  : "bg-white text-gray-900 border border-gray-200"
+                                  ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white"
+                                  : "bg-white text-gray-900 border border-gray-200 hover:border-gray-300"
                               }`}
                             >
-                              <p className="text-sm">{message.content}</p>
+                              <p className="text-sm leading-relaxed">
+                                {message.content}
+                              </p>
                               <div
                                 className={`flex items-center justify-between mt-2 text-xs ${
                                   message.sender === "me"
@@ -1108,7 +1259,9 @@ const Messages = () => {
                                     : "text-gray-500"
                                 }`}
                               >
-                                <span>{message.time}</span>
+                                <span className="font-medium">
+                                  {message.time}
+                                </span>
                                 {message.sender === "me" && (
                                   <div className="flex items-center space-x-1 ml-2">
                                     {getMessageStatusIcon(message.id)}
@@ -1146,7 +1299,7 @@ const Messages = () => {
                           />
                         </svg>
                       </button>
-                      <div className="flex-1">
+                      <div className="flex-1 relative">
                         <textarea
                           value={messageText}
                           onChange={(e) => {
@@ -1156,16 +1309,34 @@ const Messages = () => {
                           onKeyPress={handleKeyPress}
                           placeholder="Mesajınızı yazın..."
                           rows="1"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                          style={{
+                            minHeight: "44px",
+                            maxHeight: "120px",
+                          }}
                         />
+                        {messageText.trim() && (
+                          <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                          </div>
+                        )}
                       </div>
                       <button
                         onClick={sendMessage}
                         disabled={!messageText.trim() || sendingMessage}
-                        className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors duration-200"
+                        className={`p-3 rounded-full transition-all duration-300 ${
+                          sendingMessage || !messageText.trim()
+                            ? "bg-gray-300 cursor-not-allowed"
+                            : "bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 hover:shadow-lg transform hover:scale-110 active:scale-95"
+                        } text-white shadow-md`}
                       >
                         {sendingMessage ? (
-                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          <div className="flex items-center space-x-2">
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            <span className="text-sm font-medium">
+                              Gönderiliyor...
+                            </span>
+                          </div>
                         ) : (
                           <svg
                             className="w-5 h-5"
@@ -1187,11 +1358,11 @@ const Messages = () => {
                 </>
               ) : (
                 /* Empty State */
-                <div className="flex-1 flex items-center justify-center bg-gray-50">
-                  <div className="text-center">
-                    <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+                  <div className="text-center max-w-md mx-auto px-6">
+                    <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
                       <svg
-                        className="w-8 h-8 text-gray-400"
+                        className="w-12 h-12 text-blue-500"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -1204,12 +1375,19 @@ const Messages = () => {
                         />
                       </svg>
                     </div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    <h3 className="text-2xl font-bold text-gray-900 mb-3">
                       Sohbet Seçin
                     </h3>
-                    <p className="text-gray-500">
-                      Mesajlaşmak istediğiniz kişiyi sol taraftan seçin
+                    <p className="text-gray-600 mb-6 leading-relaxed">
+                      Mesajlaşmak istediğiniz kişiyi sol taraftan seçin veya
+                      yeni bir sohbet başlatın
                     </p>
+                    <button
+                      onClick={() => setShowNewChatModal(true)}
+                      className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-medium shadow-md hover:shadow-lg transform hover:scale-105"
+                    >
+                      Yeni Sohbet Başlat
+                    </button>
                   </div>
                 </div>
               )}

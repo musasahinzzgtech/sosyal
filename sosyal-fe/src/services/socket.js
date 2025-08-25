@@ -1,4 +1,4 @@
-import { io } from 'socket.io-client';
+import { io } from "socket.io-client";
 
 class SocketService {
   constructor() {
@@ -15,24 +15,24 @@ class SocketService {
       return;
     }
 
-    this.socket = io('http://localhost:3001/chat', {
+    this.socket = io("http://localhost:3001/chat", {
       auth: { token },
-      transports: ['websocket'],
+      transports: ["websocket"],
       autoConnect: true,
     });
 
-    this.socket.on('connect', () => {
-      console.log('Connected to WebSocket server');
+    this.socket.on("connect", () => {
+      console.log("Connected to WebSocket server");
       this.isConnected = true;
     });
 
-    this.socket.on('disconnect', () => {
-      console.log('Disconnected from WebSocket server');
+    this.socket.on("disconnect", () => {
+      console.log("Disconnected from WebSocket server");
       this.isConnected = false;
     });
 
-    this.socket.on('connect_error', (error) => {
-      console.error('WebSocket connection error:', error);
+    this.socket.on("connect_error", (error) => {
+      console.error("WebSocket connection error:", error);
       this.isConnected = false;
     });
 
@@ -52,67 +52,78 @@ class SocketService {
   // Set up message event handlers
   setupMessageHandlers() {
     // Handle incoming messages
-    this.socket.on('message:receive', (message) => {
-      this.notifyMessageHandlers('message:receive', message);
+    this.socket.on("message:receive", (message) => {
+      this.notifyMessageHandlers("message:receive", message);
     });
 
     // Handle message sent confirmation
-    this.socket.on('message:sent', (message) => {
-      this.notifyMessageHandlers('message:sent', message);
+    this.socket.on("message:sent", (message) => {
+      this.notifyMessageHandlers("message:sent", message);
     });
 
     // Handle message read confirmation
-    this.socket.on('message:read', (data) => {
-      this.notifyMessageHandlers('message:read', data);
+    this.socket.on("message:read", (data) => {
+      this.notifyMessageHandlers("message:read", data);
     });
 
     // Handle typing indicators
-    this.socket.on('typing:start', (data) => {
-      this.notifyTypingHandlers('typing:start', data);
+    this.socket.on("typing:start", (data) => {
+      this.notifyTypingHandlers("typing:start", data);
     });
 
-    this.socket.on('typing:stop', (data) => {
-      this.notifyTypingHandlers('typing:stop', data);
+    this.socket.on("typing:stop", (data) => {
+      this.notifyTypingHandlers("typing:stop", data);
     });
 
     // Handle user online/offline status
-    this.socket.on('user:online', (data) => {
-      this.notifyOnlineHandlers('user:online', data);
+    this.socket.on("user:online", (data) => {
+      this.notifyOnlineHandlers("user:online", data);
     });
 
-    this.socket.on('user:offline', (data) => {
-      this.notifyOnlineHandlers('user:offline', data);
+    this.socket.on("user:offline", (data) => {
+      this.notifyOnlineHandlers("user:offline", data);
     });
 
     // Handle errors
-    this.socket.on('message:error', (error) => {
-      console.error('WebSocket message error:', error);
+    this.socket.on("message:error", (error) => {
+      console.error("WebSocket message error:", error);
     });
   }
 
   // Send a message
-  sendMessage(receiverId, content, type = 'text', fileUrl, fileName, fileSize) {
+  sendMessage(
+    receiverId,
+    content,
+    type = "text",
+    fileUrl,
+    fileName,
+    fileSize,
+    messageObject = {}
+  ) {
     if (!this.isConnected || !this.socket) {
-      throw new Error('WebSocket not connected');
+      throw new Error("WebSocket not connected");
     }
 
-    this.socket.emit('message:send', {
+    this.socket.emit("message:send", {
+      messageObject,
       receiverId,
       content,
       type,
       fileUrl,
       fileName,
       fileSize,
-    });
+    }, (response) => {
+      console.log("xXXXXX: response", response);
+    }); 
   }
 
   // Mark message as read
   markMessageAsRead(messageId) {
     if (!this.isConnected || !this.socket) {
-      throw new Error('WebSocket not connected');
+      throw new Error("WebSocket not connected");
     }
 
-    this.socket.emit('message:read', { messageId });
+    this.socket.emit("message:read", { messageId });
   }
 
   // Start typing indicator
@@ -121,7 +132,7 @@ class SocketService {
       return;
     }
 
-    this.socket.emit('typing:start', { receiverId });
+    this.socket.emit("typing:start", { receiverId });
   }
 
   // Stop typing indicator
@@ -130,7 +141,7 @@ class SocketService {
       return;
     }
 
-    this.socket.emit('typing:stop', { receiverId });
+    this.socket.emit("typing:stop", { receiverId });
   }
 
   // Set user typing status
@@ -139,7 +150,7 @@ class SocketService {
       return;
     }
 
-    this.socket.emit('user:typing', { receiverId, isTyping });
+    this.socket.emit("user:typing", { receiverId, isTyping });
   }
 
   // Register message event handlers
@@ -202,11 +213,11 @@ class SocketService {
   // Notify message handlers
   notifyMessageHandlers(event, data) {
     if (this.messageHandlers.has(event)) {
-      this.messageHandlers.get(event).forEach(handler => {
+      this.messageHandlers.get(event).forEach((handler) => {
         try {
           handler(data);
         } catch (error) {
-          console.error('Error in message handler:', error);
+          console.error("Error in message handler:", error);
         }
       });
     }
@@ -215,11 +226,11 @@ class SocketService {
   // Notify typing handlers
   notifyTypingHandlers(event, data) {
     if (this.typingHandlers.has(event)) {
-      this.typingHandlers.get(event).forEach(handler => {
+      this.typingHandlers.get(event).forEach((handler) => {
         try {
           handler(data);
         } catch (error) {
-          console.error('Error in typing handler:', error);
+          console.error("Error in typing handler:", error);
         }
       });
     }
@@ -228,11 +239,11 @@ class SocketService {
   // Notify online status handlers
   notifyOnlineHandlers(event, data) {
     if (this.onlineHandlers.has(event)) {
-      this.onlineHandlers.get(event).forEach(handler => {
+      this.onlineHandlers.get(event).forEach((handler) => {
         try {
           handler(data);
         } catch (error) {
-          console.error('Error in online status handler:', error);
+          console.error("Error in online status handler:", error);
         }
       });
     }
