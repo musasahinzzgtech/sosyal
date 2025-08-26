@@ -7,7 +7,7 @@ export declare class MessagesService {
     private conversationModel;
     private usersService;
     constructor(messageModel: Model<MessageDocument>, conversationModel: Model<ConversationDocument>, usersService: UsersService);
-    createMessage(senderId: string, receiverId: string, content: string, type?: string, fileUrl?: string, fileName?: string, fileSize?: number): Promise<Message>;
+    createMessage(senderId: string, receiverId: string, content: string, type?: string, fileUrl?: string, fileName?: string, fileSize?: number): Promise<any>;
     findOrCreateConversation(userId1: string, userId2: string): Promise<Conversation>;
     getConversationMessages(conversationId: string, limit?: number, offset?: number): Promise<Message[]>;
     getUserConversations(userId: string): Promise<Conversation[]>;

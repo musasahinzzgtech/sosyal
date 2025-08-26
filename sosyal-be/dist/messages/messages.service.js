@@ -53,7 +53,10 @@ let MessagesService = class MessagesService {
                 [`unreadCounts.${receiverId}`]: (conversation.unreadCounts?.get(receiverId) || 0) + 1,
             });
             console.log('Conversation updated successfully');
-            return savedMessage;
+            return {
+                ...savedMessage,
+                conversationId: conversation._id,
+            };
         }
         catch (error) {
             console.error('Error in createMessage:', error);

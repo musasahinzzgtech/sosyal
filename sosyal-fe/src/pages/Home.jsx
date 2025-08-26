@@ -36,7 +36,6 @@ const Home = () => {
         const serviceProviders = await apiService.getServiceProviders(
           selectedCity
         );
-        console.log("serviceProviders", serviceProviders);
         if (serviceProviders && serviceProviders.length > 0) {
           // Transform backend data to match frontend format
           const transformedProfiles = serviceProviders.map((provider) => ({
@@ -131,7 +130,6 @@ const Home = () => {
           return false;
         return true;
       });
-      console.log(filtered);
       setFilteredProfiles(filtered);
       setIsLoading(false);
     }, 300); // Reduced delay since we're not simulating API calls

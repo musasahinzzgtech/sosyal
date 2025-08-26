@@ -80,12 +80,10 @@ const Profile = () => {
         try {
           setLoading(true);
           setError(null);
-          console.log("Fetching user details for user ID:", user.id);
 
           const apiService = (await import("../services/api")).default;
           const userDetails = await apiService.getUserDetails();
 
-          console.log("User details fetched successfully:", userDetails);
 
           // Update user data with complete information
           updateUser(userDetails);

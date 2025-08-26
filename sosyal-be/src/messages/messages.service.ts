@@ -21,7 +21,7 @@ export class MessagesService {
     fileUrl?: string,
     fileName?: string,
     fileSize?: number,
-  ): Promise<Message> {
+  ): Promise<any> {
     try {
       console.log('Creating message with params:', { senderId, receiverId, content, type });
       
@@ -59,7 +59,10 @@ export class MessagesService {
       });
 
       console.log('Conversation updated successfully');
-      return savedMessage;
+      return {
+        ...savedMessage,
+        conversationId: conversation._id,
+      };
     } catch (error) {
       console.error('Error in createMessage:', error);
       throw error;

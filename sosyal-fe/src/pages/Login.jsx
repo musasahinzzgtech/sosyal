@@ -30,7 +30,6 @@ const Login = () => {
       
       const response = await apiService.login(loginData);
       
-      console.log('Login successful:', response);
       
       // Use auth context to login
       login(response.user, {

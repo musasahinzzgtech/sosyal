@@ -9,7 +9,7 @@ export declare class MessagesController {
         fileUrl?: string;
         fileName?: string;
         fileSize?: number;
-    }, req: any): Promise<import("./schemas/message.schema").Message>;
+    }, req: any): Promise<any>;
     getUserConversations(req: any): Promise<import("./schemas/conversation.schema").Conversation[]>;
     getConversationByParticipants(participants: string, req: any): Promise<import("./schemas/conversation.schema").Conversation>;
     getConversationMessages(conversationId: string, limit?: number, offset?: number): Promise<import("./schemas/message.schema").Message[]>;

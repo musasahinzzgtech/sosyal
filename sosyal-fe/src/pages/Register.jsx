@@ -165,7 +165,6 @@ const Register = () => {
     setPhotos([]);
   };
 
-  console.log("formData", formData, photos);
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -205,7 +204,6 @@ const Register = () => {
       const apiService = (await import("../services/api")).default;
       const response = await apiService.register(userData, photoFiles);
 
-      console.log("Registration successful:", response);
       alert("Hesap başarıyla oluşturuldu! Giriş yapabilirsiniz.");
 
       // Redirect to login page

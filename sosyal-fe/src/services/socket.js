@@ -22,12 +22,10 @@ class SocketService {
     });
 
     this.socket.on("connect", () => {
-      console.log("Connected to WebSocket server");
       this.isConnected = true;
     });
 
     this.socket.on("disconnect", () => {
-      console.log("Disconnected from WebSocket server");
       this.isConnected = false;
     });
 
@@ -113,7 +111,6 @@ class SocketService {
       fileName,
       fileSize,
     }, (response) => {
-      console.log("xXXXXX: response", response);
     }); 
   }
 
