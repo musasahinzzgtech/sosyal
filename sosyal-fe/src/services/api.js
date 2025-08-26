@@ -54,7 +54,7 @@ class ApiService {
             }
             // Check if retry response has content before trying to parse JSON
             const retryText = await retryResponse.text();
-            
+
             if (!retryText) {
               return {};
             }
@@ -69,7 +69,7 @@ class ApiService {
 
       // Check if response has content before trying to parse JSON
       const text = await response.text();
-      
+
       if (!text) {
         // Return empty object for empty responses
         return {};
@@ -181,7 +181,7 @@ class ApiService {
 
   async uploadPhotos(photoFiles) {
     const formData = new FormData();
-    
+
     if (photoFiles && photoFiles.length > 0) {
       photoFiles.forEach((file) => {
         formData.append("photos", file);
@@ -225,9 +225,10 @@ class ApiService {
     return this.request(`/users/search?${params.toString()}`);
   }
 
-  async getServiceProviders(city) {
+  async getServiceProviders(city, sector) {
     const params = new URLSearchParams();
     if (city) params.append("city", city);
+    sector && params.append("businessSector", sector);
 
     return this.request(`/users/service-providers?${params.toString()}`);
   }

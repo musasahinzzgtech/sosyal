@@ -4,24 +4,26 @@ import { useNavigate } from "react-router-dom";
 const Home = () => {
   const navigate = useNavigate();
   const [selectedCity, setSelectedCity] = useState("");
-  const [selectedSkinTone, setSelectedSkinTone] = useState("");
-  const [ageRange, setAgeRange] = useState({ min: 0, max: 50 });
-  const [priceRange, setPriceRange] = useState({ min: 0, max: 2000 });
-  const [weightRange, setWeightRange] = useState({ min: 40, max: 100 });
-  const [heightRange, setHeightRange] = useState({ min: 150, max: 190 });
+  const [selectedSector, setSelectedSector] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [filteredProfiles, setFilteredProfiles] = useState([]);
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  const [profiles, setProfiles] = useState([]);
-  const [cities, setCities] = useState([]);
-  const [skinTones, setSkinTones] = useState([]);
+  const [businesses, setBusinesses] = useState([]);
+  const [cities] = useState([
+    { label: "İzmir", value: "izmir" },
+    { label: "Adana", value: "adana" },
+    { label: "Denizli", value: "denizli" },
+  ]);
+  const [sectors] = useState([
+    { label: "Elektrik", value: "elektrik" },
+    { label: "Kaporta", value: "kaporta" },
+    { label: "Boyama", value: "boyama" },
+    { label: "Çekici", value: "cekici" },
+  ]);
   const [error, setError] = useState(null);
-
   const [currentImageIndex, setCurrentImageIndex] = useState({});
 
-  // Load service providers from backend
+  // Load businesses from backend
   useEffect(() => {
-    const loadServiceProviders = async () => {
+    const loadBusinesses = async () => {
       try {
         setIsLoading(true);
         setError(null);
@@ -29,232 +31,150 @@ const Home = () => {
         // Import API service dynamically
         const apiService = (await import("../services/api")).default;
 
-        // Get service providers with filters
-        const params = new URLSearchParams();
-        if (selectedCity) params.append("city", selectedCity);
-
+        // Get service providers (businesses)
         const serviceProviders = await apiService.getServiceProviders(
-          selectedCity
+          selectedCity,
+          selectedSector
         );
+
         if (serviceProviders && serviceProviders.length > 0) {
           // Transform backend data to match frontend format
-          const transformedProfiles = serviceProviders.map((provider) => ({
-            id: provider._id,
-            name: `${provider.firstName} ${provider.lastName}`,
-            age: provider.birthDate
-              ? calculateAge(new Date(provider.birthDate))
-              : 25,
-            city: provider.city || "Belirtilmemiş",
-            skinTone: provider.preferences?.skinTone || "Belirtilmemiş",
-            priceRange: provider.businessInfo?.priceRange || "₺500-800",
-            height: provider.height || 170,
-            weight: provider.weight || 70,
-
-            description:
-              provider?.services ||
-              provider.businessInfo?.preferences ||
-              "Açıklama bulunmuyor.",
-            images:
-              provider.photos && provider.photos.length > 0
-                ? provider.photos.map(
+          const transformedBusinesses = serviceProviders.map((business) => ({
+            id: business._id,
+            name:
+              business.businessName ||
+              `${business.firstName} ${business.lastName}`,
+            ownerName: `${business.firstName} ${business.lastName}`,
+            city: business.city || "Belirtilmemiş",
+            sector: business.businessSector || "Genel",
+            services:
+              business.businessServices || "Hizmet açıklaması bulunmuyor",
+            address: business.businessAddress || "Adres belirtilmemiş",
+            rating: business.rating || 0,
+            reviewCount: business.reviewCount || 0,
+            isOnline: business.isOnline || false,
+            isVerified: business.isVerified || false,
+            instagram: business.instagram || "",
+            facebook: business.facebook || "",
+            phone: business.phone || "",
+            photos:
+              business.photos && business.photos.length > 0
+                ? business.photos.map(
                     (photo) => `http://localhost:3001${photo}`
-                  ) // Default avatar for now
+                  )
                 : [
-                    "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&crop=face",
+                    "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=300&fit=crop&crop=center",
                   ],
+            createdAt: business.createdAt,
+            lastSeen: business.lastSeen,
           }));
 
-          setProfiles(transformedProfiles);
-
-          // Extract unique cities and skin tones from profiles
-          const uniqueCities = [
-            ...new Set(
-              transformedProfiles
-                .map((p) => p.city)
-                .filter((city) => city !== "Belirtilmemiş")
-            ),
-          ];
-          const uniqueSkinTones = [
-            ...new Set(
-              transformedProfiles
-                .map((p) => p.skinTone)
-                .filter((tone) => tone !== "Belirtilmemiş")
-            ),
-          ];
-
-          setCities(uniqueCities);
-          setSkinTones(uniqueSkinTones);
+          setBusinesses(transformedBusinesses);
         } else {
-          setProfiles([]);
-          setCities([]);
-          setSkinTones([]);
+          setBusinesses([]);
         }
       } catch (error) {
-        console.error("Failed to load service providers:", error);
-        setError("Hizmet sağlayıcılar yüklenemedi");
-        setProfiles([]);
+        console.error("Failed to load businesses:", error);
+        setError("İşletmeler yüklenemedi");
+        setBusinesses([]);
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadServiceProviders();
-  }, [selectedCity]);
+    loadBusinesses();
+  }, [selectedCity, selectedSector]);
 
-  // Filter profiles based on selected criteria
-  useEffect(() => {
-    if (profiles.length === 0) {
-      setFilteredProfiles([]);
-      return;
-    }
+  // Filter businesses based on selected criteria
+  const filteredBusinesses = businesses.filter((business) => {
+    if (selectedCity && business.city !== selectedCity) return false;
+    if (selectedSector && business.sector !== selectedSector) return false;
+    return true;
+  });
 
-    setIsLoading(true);
-    const timer = setTimeout(() => {
-      const filtered = profiles.filter((profile) => {
-        if (selectedCity && profile.city !== selectedCity) return false;
-        if (selectedSkinTone && profile.skinTone !== selectedSkinTone)
-          return false;
-        if (profile.age < ageRange.min || profile.age > ageRange.max)
-          return false;
-        if (profile.price < priceRange.min || profile.price > priceRange.max)
-          return false;
-        if (
-          profile.weight < weightRange.min ||
-          profile.weight > weightRange.max
-        )
-          return false;
-        if (
-          profile.height < heightRange.min ||
-          profile.height > heightRange.max
-        )
-          return false;
-        return true;
-      });
-      setFilteredProfiles(filtered);
-      setIsLoading(false);
-    }, 300); // Reduced delay since we're not simulating API calls
-
-    return () => clearTimeout(timer);
-  }, [
-    profiles,
-    selectedCity,
-    selectedSkinTone,
-    ageRange,
-    priceRange,
-    weightRange,
-    heightRange,
-  ]);
-
-  // Helper function to calculate age from birth date
-  const calculateAge = (birthDate) => {
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-
-    if (
-      monthDiff < 0 ||
-      (monthDiff === 0 && today.getDate() < birthDate.getDate())
-    ) {
-      age--;
-    }
-
-    return age;
-  };
-
-  const nextImage = (profileId) => {
+  const nextImage = (businessId) => {
     setCurrentImageIndex((prev) => ({
       ...prev,
-      [profileId]:
-        ((prev[profileId] || 0) + 1) %
-        (profiles.find((p) => p.id === profileId)?.images.length || 1),
+      [businessId]:
+        ((prev[businessId] || 0) + 1) %
+        (businesses.find((b) => b.id === businessId)?.photos.length || 1),
     }));
   };
 
-  const prevImage = (profileId) => {
+  const prevImage = (businessId) => {
     setCurrentImageIndex((prev) => ({
       ...prev,
-      [profileId]:
-        prev[profileId] === 0
-          ? (profiles.find((p) => p.id === profileId)?.images.length || 1) - 1
-          : (prev[profileId] || 0) - 1,
+      [businessId]:
+        prev[businessId] === 0
+          ? (businesses.find((b) => b.id === businessId)?.photos.length || 1) -
+            1
+          : (prev[businessId] || 0) - 1,
     }));
   };
 
   const clearFilters = () => {
     setSelectedCity("");
-    setSelectedSkinTone("");
-    setAgeRange({ min: 18, max: 50 });
-    setPriceRange({ min: 0, max: 2000 });
-    setWeightRange({ min: 40, max: 100 });
-    setHeightRange({ min: 150, max: 190 });
+    setSelectedSector("");
   };
 
-  const RangeSlider = ({ label, value, onChange, min, max, step, unit }) => (
-    <div className="space-y-3">
-      <div className="flex justify-between items-center">
-        <label className="block text-sm font-medium text-gray-700">
-          {label}
-        </label>
-        <span className="text-sm text-gray-500">
-          {value.min} - {value.max} {unit}
-        </span>
-      </div>
-      <div className="relative">
-        <div className="h-2 bg-gray-200 rounded-lg">
-          <div
-            className="h-2 bg-blue-500 rounded-lg absolute"
-            style={{
-              left: `${((value.min - min) / (max - min)) * 100}%`,
-              right: `${100 - ((value.max - min) / (max - min)) * 100}%`,
-            }}
-          />
-        </div>
-        <input
-          type="range"
-          min={min}
-          max={max}
-          step={step}
-          value={value.min}
-          onChange={(e) =>
-            onChange({ ...value, min: parseInt(e.target.value) })
-          }
-          className="absolute w-full h-2 opacity-0 cursor-pointer"
-        />
-        <input
-          type="range"
-          min={min}
-          max={max}
-          step={step}
-          value={value.max}
-          onChange={(e) =>
-            onChange({ ...value, max: parseInt(e.target.value) })
-          }
-          className="absolute w-full h-2 opacity-0 cursor-pointer"
-        />
-      </div>
-    </div>
-  );
-
-  const handleSendMessage = (profile) => {
-    // Navigate to messages page with target user info
+  const handleSendMessage = (business) => {
     navigate("/messages", {
       state: {
         targetUser: {
-          id: profile.id,
-          name: profile.name,
+          id: business.id,
+          name: business.name,
           avatar:
-            profile.images && profile.images.length > 0
-              ? profile.images[0]?.split("http://localhost:3001")[1]
+            business.photos && business.photos.length > 0
+              ? business.photos[0]?.split("http://localhost:3001")[1]
               : null,
         },
       },
     });
   };
 
+  const handleCallBusiness = (phone) => {
+    if (phone) {
+      window.open(`tel:${phone}`, "_self");
+    }
+  };
+
+  const handleViewProfile = (business) => {
+    // Navigate to business profile page (you can implement this later)
+    console.log("View profile for:", business.name);
+    // TODO: Implement navigation to business profile page
+    // navigate(`/business/${business.id}`);
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("tr-TR", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
+  const getSectorIcon = (sector) => {
+    const sectorIcons = {
+      cekici: "🚛",
+      elektrik: "⚡",
+      kaporta: "🔧",
+      boya: "🎨",
+      motor: "🏍️",
+      lastik: "🛞️",
+      akü: "🔋",
+      fren: "🛑",
+      suspansiyon: "🔄",
+      genel: "🔧",
+    };
+    return sectorIcons[sector?.toLowerCase()] || "🔧";
+  };
+
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center bg-white p-8 rounded-2xl shadow-xl">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg
               className="w-8 h-8 text-red-500"
@@ -274,9 +194,25 @@ const Home = () => {
           <p className="text-gray-500 mb-4">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200"
+            className="group relative overflow-hidden px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 transform hover:scale-105 hover:shadow-lg font-medium"
           >
-            Tekrar Dene
+            <div className="flex items-center gap-2">
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
+              </svg>
+              <span>Tekrar Dene</span>
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-blue-600 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
           </button>
         </div>
       </div>
@@ -284,189 +220,33 @@ const Home = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      {/* Header 
+      <div className="bg-white shadow-lg border-b border-gray-200 px-6 py-6">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-2xl font-bold text-gray-900">Ana Sayfa</h1>
-          <p className="text-gray-600">
-            Hizmet sağlayıcıları keşfedin ve filtreleyin
-          </p>
+          <div className="text-center">
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">
+              🔧 Tamir Dükkanları
+            </h1>
+            <p className="text-xl text-gray-600">
+              Güvenilir işletmeleri keşfedin ve hizmet alın
+            </p>
+          </div>
         </div>
       </div>
-
+*/}
       {/* Filters */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="bg-white rounded-2xl shadow-xl p-6 mb-8">
           <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-            <h2 className="text-lg font-semibold text-gray-900">Filtreler</h2>
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-              >
-                {showAdvancedFilters ? "Basit Filtreler" : "Gelişmiş Filtreler"}
-              </button>
-              <button
-                onClick={clearFilters}
-                className="text-gray-500 hover:text-gray-700 text-sm font-medium"
-              >
-                Filtreleri Temizle
-              </button>
-            </div>
-          </div>
-
-          {/* Basic Filters */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            {/* City Filter */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Şehir
-              </label>
-              <select
-                value={selectedCity}
-                onChange={(e) => setSelectedCity(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Tüm Şehirler</option>
-                {cities.map((city) => (
-                  <option key={city} value={city}>
-                    {city}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Skin Tone Filter */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Ten Rengi
-              </label>
-              <select
-                value={selectedSkinTone}
-                onChange={(e) => setSelectedSkinTone(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Tüm Ten Renkleri</option>
-                {skinTones.map((tone) => (
-                  <option key={tone} value={tone}>
-                    {tone}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Age Range Filter */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Yaş Aralığı
-              </label>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="number"
-                  min="18"
-                  max="50"
-                  value={ageRange.min}
-                  onChange={(e) =>
-                    setAgeRange({ ...ageRange, min: parseInt(e.target.value) })
-                  }
-                  className="w-20 px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-                <span className="text-gray-500">-</span>
-                <input
-                  type="number"
-                  min="18"
-                  max="50"
-                  value={ageRange.max}
-                  onChange={(e) =>
-                    setAgeRange({ ...ageRange, max: parseInt(e.target.value) })
-                  }
-                  className="w-20 px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-            </div>
-
-            {/* Price Range Filter */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Fiyat Aralığı (₺)
-              </label>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="number"
-                  min="0"
-                  max="2000"
-                  value={priceRange.min}
-                  onChange={(e) =>
-                    setPriceRange({
-                      ...priceRange,
-                      min: parseInt(e.target.value),
-                    })
-                  }
-                  className="w-20 px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-                <span className="text-gray-500">-</span>
-                <input
-                  type="number"
-                  min="0"
-                  max="2000"
-                  value={priceRange.max}
-                  onChange={(e) =>
-                    setPriceRange({
-                      ...priceRange,
-                      max: parseInt(e.target.value),
-                    })
-                  }
-                  className="w-20 px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Advanced Filters */}
-          {showAdvancedFilters && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-gray-200">
-              <RangeSlider
-                label="Kilo Aralığı (kg)"
-                value={weightRange}
-                onChange={setWeightRange}
-                min={40}
-                max={100}
-                step={1}
-                unit="kg"
-              />
-              <RangeSlider
-                label="Boy Aralığı (cm)"
-                value={heightRange}
-                onChange={setHeightRange}
-                min={150}
-                max={190}
-                step={1}
-                unit="cm"
-              />
-            </div>
-          )}
-        </div>
-
-        {/* Results */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-semibold text-gray-900">
-              Sonuçlar ({filteredProfiles.length})
-            </h2>
-            {isLoading && (
-              <div className="flex items-center space-x-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
-                <span className="text-sm text-gray-500">Yükleniyor...</span>
-              </div>
-            )}
-          </div>
-
-          {filteredProfiles.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+            <h2 className="text-xl font-semibold text-gray-900">Filtreler</h2>
+            <button
+              onClick={clearFilters}
+              className="group relative overflow-hidden px-4 py-2 bg-gradient-to-r from-gray-100 to-gray-200 text-gray-600 hover:text-gray-800 text-sm font-medium rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-md border border-gray-200"
+            >
+              <div className="flex items-center gap-2">
                 <svg
-                  className="w-8 h-8 text-gray-400"
+                  className="w-4 h-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -475,172 +255,376 @@ const Home = () => {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    d="M6 18L18 6M6 6l12 12"
                   />
                 </svg>
+                <span>Filtreleri Temizle</span>
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                Sonuç Bulunamadı
-              </h3>
-              <p className="text-gray-500">
-                Seçtiğiniz kriterlere uygun hizmet sağlayıcı bulunamadı.
-                Filtreleri değiştirmeyi deneyin.
-              </p>
+              <div className="absolute inset-0 bg-gradient-to-r from-gray-200 to-gray-300 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* City Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                🏙️ Şehir Seçin
+              </label>
+              <select
+                value={selectedCity}
+                onChange={(e) => setSelectedCity(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+              >
+                <option value="">Tüm Şehirler</option>
+                {cities.map((city) => (
+                  <option key={city.value} value={city.value}>
+                    {city.label}
+                  </option>
+                ))}
+              </select>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredProfiles.map((profile) => (
-                <div
-                  key={profile.id}
-                  className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200"
+
+            {/* Sector Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                🏭 Sektör Seçin
+              </label>
+              <select
+                value={selectedSector}
+                onChange={(e) => setSelectedSector(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+              >
+                <option value="">Tüm Sektörler</option>
+                {sectors.map((sector) => (
+                  <option key={sector.value} value={sector.value}>
+                    {sector.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Results Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">
+              {filteredBusinesses.length} İşletme Bulundu
+            </h2>
+            <p className="text-gray-600">
+              {selectedCity && `📍 ${selectedCity}`}{" "}
+              {selectedSector && `• 🏭 ${selectedSector}`}
+            </p>
+          </div>
+          {isLoading && (
+            <div className="flex items-center space-x-2 bg-white px-4 py-2 rounded-xl shadow-md">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+              <span className="text-sm text-gray-600 font-medium">
+                Yükleniyor...
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Businesses Grid */}
+        {filteredBusinesses.length === 0 ? (
+          <div className="text-center py-16 bg-white rounded-2xl shadow-xl">
+            <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg
+                className="w-10 h-10 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </div>
+            <h3 className="text-xl font-medium text-gray-900 mb-3">
+              İşletme Bulunamadı
+            </h3>
+            <p className="text-gray-500 mb-6">
+              Seçtiğiniz kriterlere uygun işletme bulunamadı. Filtreleri
+              değiştirmeyi deneyin.
+            </p>
+            <button
+              onClick={clearFilters}
+              className="group relative overflow-hidden px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 transform hover:scale-105 hover:shadow-lg font-medium"
+            >
+              <div className="flex items-center gap-2">
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  {/* Image Gallery */}
-                  <div className="relative h-64 bg-gray-100">
-                    {profile.images && profile.images.length > 0 ? (
-                      <>
-                        <img
-                          src={
-                            profile.images[currentImageIndex[profile.id] || 0]
-                          }
-                          alt={profile.name}
-                          className="w-full h-full object-cover"
-                        />
-                        {profile.images.length > 1 && (
-                          <>
-                            <button
-                              onClick={() => prevImage(profile.id)}
-                              className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-all duration-200"
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+                <span>Tüm Filtreleri Temizle</span>
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-blue-600 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {filteredBusinesses.map((business) => (
+              <div
+                key={business.id}
+                className="bg-white rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1"
+              >
+                {/* Image Gallery */}
+                <div className="relative h-64 bg-gray-100">
+                  {business.photos && business.photos.length > 0 ? (
+                    <>
+                      <img
+                        src={
+                          business.photos[currentImageIndex[business.id] || 0]
+                        }
+                        alt={business.name}
+                        className="w-full h-full object-cover"
+                      />
+                      {business.photos.length > 1 && (
+                        <>
+                          <button
+                            onClick={() => prevImage(business.id)}
+                            className="absolute left-3 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-60 text-white p-2 rounded-full hover:bg-opacity-80 transition-all duration-200"
+                          >
+                            <svg
+                              className="w-5 h-5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
                             >
-                              <svg
-                                className="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M15 19l-7-7 7-7"
-                                />
-                              </svg>
-                            </button>
-                            <button
-                              onClick={() => nextImage(profile.id)}
-                              className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-all duration-200"
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M15 19l-7-7 7-7"
+                              />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => nextImage(business.id)}
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-60 text-white p-2 rounded-full hover:bg-opacity-80 transition-all duration-200"
+                          >
+                            <svg
+                              className="w-5 h-5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
                             >
-                              <svg
-                                className="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M9 5l7 7-7 7"
-                                />
-                              </svg>
-                            </button>
-                            <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1">
-                              {profile.images.map((_, index) => (
-                                <div
-                                  key={index}
-                                  className={`w-2 h-2 rounded-full ${
-                                    index ===
-                                    (currentImageIndex[profile.id] || 0)
-                                      ? "bg-white"
-                                      : "bg-white bg-opacity-50"
-                                  }`}
-                                />
-                              ))}
-                            </div>
-                          </>
-                        )}
-                      </>
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 5l7 7-7 7"
+                              />
+                            </svg>
+                          </button>
+                          <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex space-x-2">
+                            {business.photos.map((_, index) => (
+                              <div
+                                key={index}
+                                className={`w-3 h-3 rounded-full ${
+                                  index ===
+                                  (currentImageIndex[business.id] || 0)
+                                    ? "bg-white"
+                                    : "bg-white bg-opacity-50"
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-100 to-indigo-100">
+                      <div className="text-center">
+                        <div className="text-6xl mb-2">
+                          {getSectorIcon(business.sector)}
+                        </div>
+                        <p className="text-gray-500 font-medium">
+                          Fotoğraf Yok
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Online Status Badge */}
+                  <div className="absolute top-3 right-3">
+                    <div
+                      className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        business.isOnline
+                          ? "bg-green-500 text-white"
+                          : "bg-gray-500 text-white"
+                      }`}
+                    >
+                      {business.isOnline ? "🟢 Çevrimiçi" : "⚫ Çevrimdışı"}
+                    </div>
+                  </div>
+
+                  {/* Verified Badge */}
+                  {business.isVerified && (
+                    <div className="absolute top-3 left-3">
+                      <div className="bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-medium">
+                        ✓ Doğrulanmış
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Business Info */}
+                <div className="p-6 h-full">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-2xl">
+                          {getSectorIcon(business.sector)}
+                        </span>
+                        <h3 className="text-xl font-bold text-gray-900">
+                          {business.name}
+                        </h3>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-2">
+                        📍 {business.city}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Rating */}
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="flex items-center">
+                      {[...Array(5)].map((_, i) => (
                         <svg
-                          className="w-16 h-16 text-gray-400"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
+                          key={i}
+                          className={`w-5 h-5 ${
+                            i < Math.floor(business.rating)
+                              ? "text-yellow-400 fill-current"
+                              : "text-gray-300"
+                          }`}
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                          />
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                         </svg>
+                      ))}
+                    </div>
+                    <span className="text-sm text-gray-600">
+                      {business.rating.toFixed(1)} ({business.reviewCount}{" "}
+                      değerlendirme)
+                    </span>
+                  </div>
+
+                  {/* Services Description */}
+                  <p className="text-gray-700 text-sm mb-4 line-clamp-2">
+                    {business.services}
+                  </p>
+
+                  {/* Business Details */}
+                  <div className="space-y-2 mb-4 text-sm">
+                    {business.address &&
+                      business.address !== "Adres belirtilmemiş" && (
+                        <div className="flex items-start gap-2">
+                          <span className="text-gray-500">📍</span>
+                          <span className="text-gray-700">
+                            {business.address}
+                          </span>
+                        </div>
+                      )}
+                    {business.phone && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-500">📞</span>
+                        <span className="text-gray-700">{business.phone}</span>
+                      </div>
+                    )}
+                    {business.instagram && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-500">📷</span>
+                        <span className="text-gray-700">
+                          {business.instagram}
+                        </span>
+                      </div>
+                    )}
+                    {business.facebook && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-500">📘</span>
+                        <span className="text-gray-700">
+                          {business.facebook}
+                        </span>
                       </div>
                     )}
                   </div>
 
-                  {/* Profile Info */}
-                  <div className="p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                          {profile.name}
-                        </h3>
-                        <p className="text-sm text-gray-600">
-                          {profile.age} yaşında • {profile.city}
-                        </p>
+                  {/* Action Buttons */}
+                  <div className="grid grid-cols-2 gap-3 ">
+                    {/* Call Button */}
+                    <button
+                      onClick={() => handleSendMessage(business)}
+                      className="w-full group cursor-pointer relative overflow-hidden bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-2 rounded-2xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg font-semibold text-base"
+                    >
+                      <div className="flex items-center justify-center gap-3 ">
+                        <span>Mesaj Gönder</span>
                       </div>
-                      <div className="text-right">
-                        <p className="text-lg font-bold text-blue-600">
-                          {profile.priceRange}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {profile.price} ₺
-                        </p>
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-blue-600 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+                    </button>
+                    {/* View Profile Button */}
+                    <button
+                      onClick={() => handleViewProfile(business)}
+                      className="group relative overflow-hidden cursor-pointer bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 py-1 px-1 rounded-xl hover:from-gray-200 hover:to-gray-300 transition-all duration-300 transform hover:scale-105 hover:shadow-md font-medium text-sm border border-gray-200"
+                    >
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="w-5 h-5  bg-gray-300 rounded-full flex items-center justify-center">
+                          <svg
+                            className="w-3 h-3"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                            />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                            />
+                          </svg>
+                        </div>
+                        <span>Profili Gör</span>
                       </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
-                      <div>
-                        <span className="text-gray-500">Ten:</span>
-                        <span className="ml-2 text-gray-900">
-                          {profile.skinTone}
+                      <div className="absolute inset-0 bg-gradient-to-r from-gray-200 to-gray-300 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+                    </button>
+                  </div>
+                  {/* Additional Info
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <div className="flex items-center justify-between text-xs text-gray-500">
+                      <span>Kayıt: {formatDate(business.createdAt)}</span>
+                      {business.lastSeen && (
+                        <span>
+                          Son görülme: {formatDate(business.lastSeen)}
                         </span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Kilo:</span>
-                        <span className="ml-2 text-gray-900">
-                          {profile.weight} kg
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Boy:</span>
-                        <span className="ml-2 text-gray-900">
-                          {profile.height} cm
-                        </span>
-                      </div>
-                    </div>
-
-                    <p className="text-gray-700 text-sm mb-4 line-clamp-3">
-                      {profile.description}
-                    </p>
-
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleSendMessage(profile)}
-                        className="flex-1 bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors duration-200"
-                      >
-                        Mesaj Gönder
-                      </button>
-                      <button className="bg-gray-100 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-200 transition-colors duration-200">
-                        Profili Gör
-                      </button>
+                      )}
                     </div>
                   </div>
+                   */}
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
