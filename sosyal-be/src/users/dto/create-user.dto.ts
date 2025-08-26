@@ -37,51 +37,23 @@ export class CreateUserDto {
   @IsDateString()
   birthDate: string;
 
-  @IsOptional()
-  @IsNumber()
-  @Min(18)
-  @Max(100)
-  age?: number;
-
-  // Physical attributes
-  @IsOptional()
-  @IsNumber()
-  @Min(100)
-  @Max(250)
-  height?: number;
-
-  @IsOptional() 
-  @IsNumber()
-  @Min(30)
-  @Max(200)
-  weight?: number;
-
-  @IsOptional()
-  @IsString()
-  skinColor?: string;
-
   @IsEnum(UserType)
   userType: UserType;
 
-  // Service provider specific fields
   @IsOptional()
   @IsString()
-  services?: string;
-
-  @IsOptional()
-  @IsString()
-  priceRange?: string;
+  businessName?: string;
 
   // Business-specific fields for ISLETME users
-  @ValidateIf(o => o.userType === UserType.ISLETME)
+  @ValidateIf((o) => o.userType === UserType.ISLETME)
   @IsString()
   businessAddress?: string;
 
-  @ValidateIf(o => o.userType === UserType.ISLETME)
+  @ValidateIf((o) => o.userType === UserType.ISLETME)
   @IsString()
   businessSector?: string;
 
-  @ValidateIf(o => o.userType === UserType.ISLETME)
+  @ValidateIf((o) => o.userType === UserType.ISLETME)
   @IsString()
   businessServices?: string;
 

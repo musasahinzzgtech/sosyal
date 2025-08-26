@@ -7,13 +7,8 @@ export declare class CreateUserDto {
     password: string;
     city: string;
     birthDate: string;
-    age?: number;
-    height?: number;
-    weight?: number;
-    skinColor?: string;
     userType: UserType;
-    services?: string;
-    priceRange?: string;
+    businessName?: string;
     businessAddress?: string;
     businessSector?: string;
     businessServices?: string;

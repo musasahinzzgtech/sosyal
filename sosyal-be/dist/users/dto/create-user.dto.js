@@ -46,32 +46,6 @@ __decorate([
     __metadata("design:type", String)
 ], CreateUserDto.prototype, "birthDate", void 0);
 __decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsNumber)(),
-    (0, class_validator_1.Min)(18),
-    (0, class_validator_1.Max)(100),
-    __metadata("design:type", Number)
-], CreateUserDto.prototype, "age", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsNumber)(),
-    (0, class_validator_1.Min)(100),
-    (0, class_validator_1.Max)(250),
-    __metadata("design:type", Number)
-], CreateUserDto.prototype, "height", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsNumber)(),
-    (0, class_validator_1.Min)(30),
-    (0, class_validator_1.Max)(200),
-    __metadata("design:type", Number)
-], CreateUserDto.prototype, "weight", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], CreateUserDto.prototype, "skinColor", void 0);
-__decorate([
     (0, class_validator_1.IsEnum)(user_schema_1.UserType),
     __metadata("design:type", String)
 ], CreateUserDto.prototype, "userType", void 0);
@@ -79,24 +53,19 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], CreateUserDto.prototype, "services", void 0);
+], CreateUserDto.prototype, "businessName", void 0);
 __decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], CreateUserDto.prototype, "priceRange", void 0);
-__decorate([
-    (0, class_validator_1.ValidateIf)(o => o.userType === user_schema_1.UserType.ISLETME),
+    (0, class_validator_1.ValidateIf)((o) => o.userType === user_schema_1.UserType.ISLETME),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateUserDto.prototype, "businessAddress", void 0);
 __decorate([
-    (0, class_validator_1.ValidateIf)(o => o.userType === user_schema_1.UserType.ISLETME),
+    (0, class_validator_1.ValidateIf)((o) => o.userType === user_schema_1.UserType.ISLETME),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateUserDto.prototype, "businessSector", void 0);
 __decorate([
-    (0, class_validator_1.ValidateIf)(o => o.userType === user_schema_1.UserType.ISLETME),
+    (0, class_validator_1.ValidateIf)((o) => o.userType === user_schema_1.UserType.ISLETME),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateUserDto.prototype, "businessServices", void 0);

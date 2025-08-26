@@ -53,29 +53,9 @@ __decorate([
     __metadata("design:type", String)
 ], User.prototype, "userType", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ min: 100, max: 250 }),
-    __metadata("design:type", Number)
-], User.prototype, "height", void 0);
-__decorate([
-    (0, mongoose_1.Prop)({ min: 30, max: 200 }),
-    __metadata("design:type", Number)
-], User.prototype, "weight", void 0);
-__decorate([
-    (0, mongoose_1.Prop)({ min: 18, max: 100 }),
-    __metadata("design:type", Number)
-], User.prototype, "age", void 0);
-__decorate([
     (0, mongoose_1.Prop)(),
     __metadata("design:type", String)
-], User.prototype, "skinColor", void 0);
-__decorate([
-    (0, mongoose_1.Prop)(),
-    __metadata("design:type", String)
-], User.prototype, "services", void 0);
-__decorate([
-    (0, mongoose_1.Prop)(),
-    __metadata("design:type", String)
-], User.prototype, "priceRange", void 0);
+], User.prototype, "businessName", void 0);
 __decorate([
     (0, mongoose_1.Prop)(),
     __metadata("design:type", String)
@@ -136,7 +116,6 @@ exports.UserSchema.index({
     firstName: "text",
     lastName: "text",
     city: "text",
-    services: "text",
     businessServices: "text",
     businessSector: "text",
 });

@@ -21,6 +21,7 @@ const Register = () => {
     city: "",
     birthDate: "",
     skinColor: "",
+    businessName: "",
     businessAddress: "",
     businessSector: "",
     businessServices: "",
@@ -288,7 +289,10 @@ const Register = () => {
         ...(userType === "isletme" && {
           businessServices: formData.businessServices,
           businessSector: formData.businessSector,
+          businessName: formData.businessName,
           businessAddress: formData.businessAddress,
+          instagram: formData.instagram,
+          facebook: formData.facebook,
         }),
       };
 
@@ -1115,6 +1119,7 @@ const Register = () => {
                       <option value={"elektirik"}>Elektrik</option>
                       <option value={"kaporta"}>Kaporta</option>
                       <option value={"boya"}>Boyama</option>
+                      <option value={"cekici"}>Çekici</option>
                     </select>
                     <p className="text-xs text-gray-500 mt-1">
                       Hizmetlerinizi seçin
@@ -1243,7 +1248,14 @@ const Register = () => {
                         müşterilerinizin sizi kolayca bulmasını sağlayın.
                       </p>
                     </div>
-
+                    <div>
+                      <label
+                        htmlFor="businessName"
+                        className="block text-sm font-medium text-gray-700 mb-2"
+                      >
+                        İşletme Adı
+                      </label>
+                    </div>
                     {/* Manual Address Input */}
                     <div className="mt-4">
                       <label

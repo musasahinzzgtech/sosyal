@@ -14,42 +14,14 @@ const Profile = () => {
     phone: "",
     city: "",
     birthDate: "",
-    height: "",
-    weight: "",
-    age: "",
-    skinColor: "",
-    preferences: "",
-    services: "",
-    priceRange: "",
+    businessName: "",
+    businessSector: "",
+    businessServices: "",
+    instagram: "",
+    facebook: "",
   });
 
-  const skinColorOptions = [
-    { label: "Sarışın", value: "sarışın" },
-    { label: "Kumral", value: "kumral" },
-    { label: "Esmersi", value: "esmersi" },
-    { label: "Siyah", value: "siyah" },
-    { label: "Açık Ten", value: "açık ten" },
-    { label: "Orta Ten", value: "orta ten" },
-    { label: "Koyu Ten", value: "koyu ten" },
-  ];
-
-  const cities = [
-    "İstanbul",
-    "Ankara",
-    "İzmir",
-    "Bursa",
-    "Antalya",
-    "Adana",
-    "Konya",
-    "Gaziantep",
-    "Mersin",
-    "Diyarbakır",
-    "Samsun",
-    "Denizli",
-    "Eskişehir",
-    "Trabzon",
-    "Erzurum",
-  ];
+  const cities = ["İzmir", "Adana", "Denizli"];
 
   // Initialize form data when user data is available
   useEffect(() => {
@@ -62,13 +34,11 @@ const Profile = () => {
         birthDate: user.birthDate
           ? new Date(user.birthDate).toISOString().split("T")[0]
           : "",
-        height: user.height || "",
-        weight: user.weight || "",
-        age: user.age || "",
-        skinColor: user.skinColor || "",
-        preferences: user.preferences || "",
-        services: user.services || "",
-        priceRange: user.priceRange || "",
+        businessName: user.businessName || "",
+        businessSector: user.businessSector || "",
+        businessServices: user.businessServices || "",
+        instagram: user.instagram || "",
+        facebook: user.facebook || "",
       });
     }
   }, [user]);
@@ -83,7 +53,6 @@ const Profile = () => {
 
           const apiService = (await import("../services/api")).default;
           const userDetails = await apiService.getUserDetails();
-
 
           // Update user data with complete information
           updateUser(userDetails);
@@ -123,16 +92,12 @@ const Profile = () => {
         phone: formData.phone,
         city: formData.city,
         birthDate: formData.birthDate,
-        height: parseInt(formData.height),
-        weight: parseInt(formData.weight),
-        age: parseInt(formData.age),
-        skinColor: formData.skinColor,
-        ...(user.userType === "musteri" && {
-          preferences: formData.preferences,
-        }),
         ...(user.userType === "isletme" && {
-          services: formData.services,
-          priceRange: formData.priceRange,
+          businessName: formData.businessName,
+          businessSector: formData.businessSector,
+          businessServices: formData.businessServices,
+          instagram: formData.instagram,
+          facebook: formData.facebook,
         }),
       };
 
@@ -173,13 +138,6 @@ const Profile = () => {
         birthDate: user.birthDate
           ? new Date(user.birthDate).toISOString().split("T")[0]
           : "",
-        height: user.height || "",
-        weight: user.weight || "",
-        age: user.age || "",
-        skinColor: user.skinColor || "",
-        preferences: user.preferences || "",
-        services: user.services || "",
-        priceRange: user.priceRange || "",
       });
     }
     setIsEditing(false);
@@ -824,142 +782,123 @@ const Profile = () => {
             {user.userType === "isletme" && (
               <div className="border-b border-gray-200 pb-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Fiziksel Özellikler
+                  İşletme Bilgileri
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Boy (cm)
+                      İşletme Adı
                     </label>
                     <input
-                      type="number"
-                      name="height"
-                      value={formData.height}
+                      name="businessName"
+                      value={formData.businessName}
                       onChange={handleInputChange}
                       disabled={!isEditing}
-                      min="100"
-                      max="250"
-                      step="1"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
-                      placeholder="175"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Kilo (kg)
-                    </label>
-                    <input
-                      type="number"
-                      name="weight"
-                      value={formData.weight}
-                      onChange={handleInputChange}
-                      disabled={!isEditing}
-                      min="30"
-                      max="200"
-                      step="0.5"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
-                      placeholder="70"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Yaş
-                    </label>
-                    <input
-                      type="number"
-                      name="age"
-                      value={formData.age}
-                      onChange={handleInputChange}
-                      disabled={!isEditing}
-                      min="18"
-                      max="100"
-                      step="1"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
-                      placeholder="25"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Ten Rengi
+                    <label
+                      htmlFor="businessSector"
+                      className="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Hangi alanda çalışıyorsunuz?
                     </label>
                     <select
-                      name="skinColor"
-                      value={formData.skinColor}
-                      onChange={handleInputChange}
+                      id="businessSector"
+                      name="businessSector"
                       disabled={!isEditing}
+                      value={formData.businessSector}
+                      onChange={handleInputChange}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
                     >
-                      <option value="">Ten rengi seçin</option>
-                      {skinColorOptions.map((color) => (
-                        <option key={color.value} value={color.value}>
-                          {color.label}
-                        </option>
-                      ))}
+                      <option value={"elektirik"}>Elektrik</option>
+                      <option value={"kaporta"}>Kaporta</option>
+                      <option value={"boya"}>Boyama</option>
+                      <option value={"cekici"}>Çekici</option>
                     </select>
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="instagram"
+                      className="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Instagram Hesabı
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg
+                          className="h-5 w-5 text-gray-400"
+                          fill="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 6.62 5.367 11.987 11.988 11.987 6.62 0 11.987-5.367 11.987-11.987C24.014 5.367 18.637.001 12.017.001zM8.449 16.988c-1.297 0-2.448-.49-3.323-1.297C4.198 14.895 3.708 13.744 3.708 12.447s.49-2.448 1.297-3.323c.875-.807 2.026-1.297 3.323-1.297s2.448.49 3.323 1.297c.807.875 1.297 2.026 1.297 3.323s-.49 2.448-1.297 3.323c-.875.807-2.026 1.297-3.323 1.297zm7.718-1.297c-.49.49-1.141.807-1.892.807s-1.402-.317-1.892-.807c-.49-.49-.807-1.141-.807-1.892s.317-1.402.807-1.892c.49-.49 1.141-.807 1.892-.807s1.402.317 1.892.807c.49.49.807 1.141.807 1.892s-.317 1.402-.807 1.892z" />
+                        </svg>
+                      </div>
+                      <input
+                        type="text"
+                        id="instagram"
+                        name="instagram"
+                        disabled={!isEditing}
+                        value={formData.instagram}
+                        onChange={handleInputChange}
+                        className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 disabled:bg-gray-100 disabled:text-gray-500"
+                        placeholder="@kullaniciadi"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="facebook"
+                      className="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Facebook Sayfası
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg
+                          className="h-5 w-5 text-gray-400"
+                          fill="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                        </svg>
+                      </div>
+                      <input
+                        type="text"
+                        id="facebook"
+                        name="facebook"
+                        disabled={!isEditing}
+                        value={formData.facebook}
+                        onChange={handleInputChange}
+                        className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 disabled:bg-gray-100 disabled:text-gray-500"
+                        placeholder="facebook.com/sayfaadi"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="businessServices"
+                      className="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Sanayide dükkanınızda hangi hizmetleri sunuyorsunuz?
+                    </label>
+                    <textarea
+                      id="businessServices"
+                      name="businessServices"
+                      value={formData.businessServices}
+                      onChange={handleInputChange}
+                      disabled={!isEditing}
+                      required
+                      rows="3"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
+                      placeholder="Hangi hizmetleri sunuyorsunuz? Detaylı açıklayın..."
+                    />
                   </div>
                 </div>
               </div>
-            )}
-
-            {/* User Type Specific Fields */}
-            {user.userType === "musteri" && (
-              <div className="border-b border-gray-200 pb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Müşteri Tercihleri
-                </h3>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    İlgi Alanları ve Tercihler
-                  </label>
-                  <textarea
-                    name="preferences"
-                    value={formData.preferences}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                    rows="3"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
-                    placeholder="Hangi hizmetlerle ilgileniyorsunuz?"
-                  />
-                </div>
-              </div>
-            )}
-
-            {user.userType === "isletme" && (
-              <>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Fiyat Aralığı *
-                  </label>
-                  <input
-                    type="text"
-                    name="priceRange"
-                    value={formData.priceRange}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
-                  />
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Sunulan Hizmetler *
-                  </label>
-                  <textarea
-                    name="services"
-                    value={formData.services}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                    required
-                    rows="3"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
-                    placeholder="Hangi hizmetleri sunuyorsunuz?"
-                  />
-                </div>
-              </>
             )}
 
             {/* Account Information (Read-only) */}

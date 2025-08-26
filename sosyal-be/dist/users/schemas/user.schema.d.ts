@@ -14,12 +14,7 @@ export declare class User extends Document {
     city: string;
     birthDate: Date;
     userType: UserType;
-    height?: number;
-    weight?: number;
-    age?: number;
-    skinColor?: string;
-    services?: string;
-    priceRange?: string;
+    businessName?: string;
     businessAddress?: string;
     businessSector?: string;
     businessServices?: string;

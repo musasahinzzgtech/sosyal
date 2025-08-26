@@ -105,15 +105,9 @@ let UsersController = class UsersController {
                 password: userData.password,
                 city: userData.city,
                 birthDate: userData.birthDate,
-                height: userData.height ? parseInt(userData.height) : undefined,
-                weight: userData.weight ? parseFloat(userData.weight) : undefined,
-                age: userData.age ? parseInt(userData.age) : undefined,
-                skinColor: userData.skinColor || undefined,
                 userType: userData.userType === "musteri"
                     ? user_schema_1.UserType.MUSTERI
                     : user_schema_1.UserType.ISLETME,
-                services: userData.services || "",
-                priceRange: userData.priceRange || "",
                 businessAddress: userData.businessAddress || undefined,
                 businessSector: userData.businessSector || undefined,
                 businessServices: userData.businessServices || undefined,

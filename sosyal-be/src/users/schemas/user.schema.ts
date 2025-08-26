@@ -36,25 +36,8 @@ export class User extends Document {
   @Prop({ required: true, enum: UserType })
   userType: UserType;
 
-  // Physical attributes
-  @Prop({ min: 100, max: 250 })
-  height?: number;
-
-  @Prop({ min: 30, max: 200 })
-  weight?: number;
-
-  @Prop({ min: 18, max: 100 })
-  age?: number;
-
   @Prop()
-  skinColor?: string;
-
-  // Service provider specific fields
-  @Prop()
-  services?: string;
-
-  @Prop()
-  priceRange?: string;
+  businessName?: string;
 
   // Business-specific fields for ISLETME users
   @Prop()
@@ -112,7 +95,6 @@ UserSchema.index({
   firstName: "text",
   lastName: "text",
   city: "text",
-  services: "text",
   businessServices: "text",
   businessSector: "text",
 });

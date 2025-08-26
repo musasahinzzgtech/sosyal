@@ -7,12 +7,14 @@
 Registers a new user with optional photo uploads.
 
 **Request:**
+
 - Content-Type: `multipart/form-data`
 - Body:
   - `userData`: JSON string containing user information
   - `photos`: Array of image files (optional, max 10)
 
 **User Data Fields:**
+
 ```json
 {
   "firstName": "string (required)",
@@ -23,12 +25,6 @@ Registers a new user with optional photo uploads.
   "city": "string (required)",
   "birthDate": "string (required, ISO date)",
   "userType": "musteri|isletme (required)",
-  "skinColor": "string (optional)",
-  "height": "number (optional, 100-250)",
-  "weight": "number (optional, 30-200)",
-  "age": "number (optional, 18-100)",
-  "services": "string (optional)",
-  "priceRange": "string (optional)",
   "businessAddress": "string (optional, required for isletme)",
   "businessSector": "string (optional, required for isletme)",
   "businessServices": "string (optional, required for isletme)",
@@ -38,6 +34,7 @@ Registers a new user with optional photo uploads.
 ```
 
 **Response:**
+
 ```json
 {
   "message": "User registered successfully",
@@ -58,15 +55,18 @@ Registers a new user with optional photo uploads.
 ## Photo Management
 
 ### POST `/api/users/upload-photos` (Protected)
+
 Upload multiple photos for an authenticated user.
 
 **Request:**
+
 - Authorization: `Bearer <token>`
 - Content-Type: `multipart/form-data`
 - Body:
   - `photos`: Array of image files (max 10)
 
 **Response:**
+
 ```json
 {
   "message": "Photos uploaded successfully",
@@ -76,15 +76,18 @@ Upload multiple photos for an authenticated user.
 ```
 
 ### POST `/api/users/upload-photo` (Protected)
+
 Upload a single photo for an authenticated user.
 
 **Request:**
+
 - Authorization: `Bearer <token>`
 - Content-Type: `multipart/form-data`
 - Body:
   - `photo`: Single image file
 
 **Response:**
+
 ```json
 {
   "message": "Photo uploaded successfully",
@@ -94,15 +97,18 @@ Upload a single photo for an authenticated user.
 ```
 
 ### DELETE `/api/users/remove-photo` (Protected)
+
 Remove a photo from user's profile.
 
 **Request:**
+
 - Authorization: `Bearer <token>`
 - Content-Type: `application/json`
 - Body:
   - `url`: Photo URL to remove
 
 **Response:**
+
 ```json
 {
   "message": "Photo removed successfully"
@@ -112,12 +118,15 @@ Remove a photo from user's profile.
 ## User Profile
 
 ### GET `/api/users/profile/complete` (Protected)
+
 Get complete user profile details.
 
 **Request:**
+
 - Authorization: `Bearer <token>`
 
 **Response:**
+
 ```json
 {
   "_id": "string",
@@ -154,6 +163,7 @@ Get complete user profile details.
 ## Business User Requirements
 
 When `userType` is `"isletme"`, the following fields are required:
+
 - `businessServices`: Description of services offered
 - `businessSector`: Business sector (e.g., "elektirik", "kaporta", "boya")
 - `businessAddress`: Business address (optional but recommended)
@@ -161,6 +171,7 @@ When `userType` is `"isletme"`, the following fields are required:
 ## Error Handling
 
 All endpoints return appropriate HTTP status codes:
+
 - `200`: Success
 - `400`: Bad Request (validation errors)
 - `401`: Unauthorized (missing/invalid token)
@@ -168,6 +179,7 @@ All endpoints return appropriate HTTP status codes:
 - `500`: Internal Server Error
 
 Error responses include descriptive messages:
+
 ```json
 {
   "message": "Error description",

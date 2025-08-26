@@ -145,8 +145,6 @@ export class UsersService {
       isVerified: user.isVerified || false,
       isActive: user.isActive !== undefined ? user.isActive : true,
 
-      services: user.services || "",
-      priceRange: user.priceRange || "",
       phone: user.phone || "",
       city: user.city || "",
       birthDate: user.birthDate || null,
