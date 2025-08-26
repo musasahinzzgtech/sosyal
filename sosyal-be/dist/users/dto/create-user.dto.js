@@ -86,6 +86,31 @@ __decorate([
     __metadata("design:type", String)
 ], CreateUserDto.prototype, "priceRange", void 0);
 __decorate([
+    (0, class_validator_1.ValidateIf)(o => o.userType === user_schema_1.UserType.ISLETME),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateUserDto.prototype, "businessAddress", void 0);
+__decorate([
+    (0, class_validator_1.ValidateIf)(o => o.userType === user_schema_1.UserType.ISLETME),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateUserDto.prototype, "businessSector", void 0);
+__decorate([
+    (0, class_validator_1.ValidateIf)(o => o.userType === user_schema_1.UserType.ISLETME),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateUserDto.prototype, "businessServices", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateUserDto.prototype, "instagram", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateUserDto.prototype, "facebook", void 0);
+__decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsArray)(),
     (0, class_validator_1.IsString)({ each: true }),

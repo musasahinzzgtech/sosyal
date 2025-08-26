@@ -2,7 +2,7 @@ import { Document, Types } from "mongoose";
 export type UserDocument = User & Document;
 export declare enum UserType {
     MUSTERI = "musteri",
-    ILAN_VEREN = "ilan-veren"
+    ISLETME = "isletme"
 }
 export declare class User extends Document {
     _id: Types.ObjectId;
@@ -20,6 +20,11 @@ export declare class User extends Document {
     skinColor?: string;
     services?: string;
     priceRange?: string;
+    businessAddress?: string;
+    businessSector?: string;
+    businessServices?: string;
+    instagram?: string;
+    facebook?: string;
     photos?: string[];
     isOnline: boolean;
     lastSeen?: Date;

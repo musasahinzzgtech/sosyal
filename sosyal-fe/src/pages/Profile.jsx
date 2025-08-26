@@ -130,7 +130,7 @@ const Profile = () => {
         ...(user.userType === "musteri" && {
           preferences: formData.preferences,
         }),
-        ...(user.userType === "ilan-veren" && {
+        ...(user.userType === "isletme" && {
           services: formData.services,
           priceRange: formData.priceRange,
         }),
@@ -457,7 +457,7 @@ const Profile = () => {
                 </div>
 
                 {/* Physical Attributes Display - Only for Service Providers */}
-                {user.userType === "ilan-veren" &&
+                {user.userType === "isletme" &&
                   (user.height ||
                     user.weight ||
                     user.age ||
@@ -821,7 +821,7 @@ const Profile = () => {
             </div>
 
             {/* Physical Attributes - Only for Service Providers */}
-            {user.userType === "ilan-veren" && (
+            {user.userType === "isletme" && (
               <div className="border-b border-gray-200 pb-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
                   Fiziksel Özellikler
@@ -927,7 +927,7 @@ const Profile = () => {
               </div>
             )}
 
-            {user.userType === "ilan-veren" && (
+            {user.userType === "isletme" && (
               <>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">

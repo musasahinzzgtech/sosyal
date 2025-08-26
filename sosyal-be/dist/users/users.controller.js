@@ -41,6 +41,15 @@ let UsersController = class UsersController {
             filename: file.filename,
         };
     }
+    async uploadPhotos(req, files) {
+        const photoUrls = files.map((file) => `/uploads/photos/${file.filename}`);
+        await this.usersService.addBulkPhotos(req.user.id, photoUrls);
+        return {
+            message: "Photos uploaded successfully",
+            photoUrls,
+            count: files.length,
+        };
+    }
     async removePhoto(req) {
         const url = req.body.url;
         console.log("removePhoto called with url:", url);
@@ -60,15 +69,33 @@ let UsersController = class UsersController {
     }
     async registerWithPhotos(userDataString, photos) {
         try {
-            const userData = JSON.parse(userDataString);
-            if (!userData.firstName ||
-                !userData.lastName ||
-                !userData.email ||
-                !userData.password ||
-                !userData.city ||
-                !userData.birthDate ||
-                !userData.userType) {
-                throw new common_1.BadRequestException("Missing required fields");
+            let userData;
+            try {
+                userData = JSON.parse(userDataString);
+            }
+            catch (parseError) {
+                throw new common_1.BadRequestException("Invalid JSON format in userData");
+            }
+            const requiredFields = [
+                "firstName",
+                "lastName",
+                "email",
+                "password",
+                "city",
+                "birthDate",
+                "userType"
+            ];
+            const missingFields = requiredFields.filter(field => !userData[field]);
+            if (missingFields.length > 0) {
+                throw new common_1.BadRequestException(`Missing required fields: ${missingFields.join(", ")}`);
+            }
+            if (!["musteri", "isletme"].includes(userData.userType)) {
+                throw new common_1.BadRequestException("Invalid userType. Must be 'musteri' or 'isletme'");
+            }
+            if (userData.userType === "isletme") {
+                if (!userData.businessServices) {
+                    throw new common_1.BadRequestException("businessServices is required for business users");
+                }
             }
             const createUserDto = {
                 firstName: userData.firstName,
@@ -84,9 +111,14 @@ let UsersController = class UsersController {
                 skinColor: userData.skinColor || undefined,
                 userType: userData.userType === "musteri"
                     ? user_schema_1.UserType.MUSTERI
-                    : user_schema_1.UserType.ILAN_VEREN,
+                    : user_schema_1.UserType.ISLETME,
                 services: userData.services || "",
                 priceRange: userData.priceRange || "",
+                businessAddress: userData.businessAddress || undefined,
+                businessSector: userData.businessSector || undefined,
+                businessServices: userData.businessServices || undefined,
+                instagram: userData.instagram || undefined,
+                facebook: userData.facebook || undefined,
             };
             let photoUrls = [];
             if (photos && photos.length > 0) {
@@ -109,7 +141,10 @@ let UsersController = class UsersController {
             if (error instanceof common_1.BadRequestException) {
                 throw error;
             }
-            throw new common_1.BadRequestException("Invalid user data format or registration failed");
+            if (error.code === 11000) {
+                throw new common_1.BadRequestException("User with this email already exists");
+            }
+            throw new common_1.BadRequestException(`Registration failed: ${error.message || "Unknown error"}`);
         }
     }
     findAll() {
@@ -182,6 +217,32 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "uploadPhoto", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Post)("upload-photos"),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FilesInterceptor)("photos", 10, {
+        storage: (0, multer_1.diskStorage)({
+            destination: "./uploads/photos",
+            filename: (req, file, cb) => {
+                const randomName = Array(32)
+                    .fill(null)
+                    .map(() => Math.round(Math.random() * 16).toString(16))
+                    .join("");
+                return cb(null, `${randomName}${(0, path_1.extname)(file.originalname)}`);
+            },
+        }),
+    })),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.UploadedFiles)(new common_1.ParseFilePipe({
+        validators: [
+            new common_1.MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
+            new common_1.FileTypeValidator({ fileType: ".(jpg|jpeg|png|gif)" }),
+        ],
+    }))),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Array]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "uploadPhotos", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Delete)("remove-photo"),

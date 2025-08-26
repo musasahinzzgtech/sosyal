@@ -14,5 +14,10 @@ export declare class CreateUserDto {
     userType: UserType;
     services?: string;
     priceRange?: string;
+    businessAddress?: string;
+    businessSector?: string;
+    businessServices?: string;
+    instagram?: string;
+    facebook?: string;
     photos?: string[];
 }

@@ -127,6 +127,11 @@ let UsersService = class UsersService {
             birthDate: user.birthDate || null,
             lastSeen: user.lastSeen || null,
             createdAt: user.createdAt || new Date(),
+            businessAddress: user.businessAddress || "",
+            businessSector: user.businessSector || "",
+            businessServices: user.businessServices || "",
+            instagram: user.instagram || "",
+            facebook: user.facebook || "",
         };
         console.log("Returning user details with ID field:", userDetails.id);
         return userDetails;
@@ -139,7 +144,7 @@ let UsersService = class UsersService {
     }
     async getServiceProviders(city) {
         let query = {
-            userType: user_schema_1.UserType.ILAN_VEREN,
+            userType: user_schema_1.UserType.ISLETME,
             isActive: true,
         };
         if (city) {
@@ -175,6 +180,15 @@ let UsersService = class UsersService {
     async removePhoto(userId, photoUrl) {
         const user = await this.userModel
             .findByIdAndUpdate(userId, { $pull: { photos: photoUrl } }, { new: true, runValidators: true })
+            .select("-password -refreshToken");
+        if (!user) {
+            throw new common_1.NotFoundException("User not found");
+        }
+        return user;
+    }
+    async addBulkPhotos(userId, photoUrls) {
+        const user = await this.userModel
+            .findByIdAndUpdate(userId, { $push: { photos: { $each: photoUrls } } }, { new: true, runValidators: true })
             .select("-password -refreshToken");
         if (!user) {
             throw new common_1.NotFoundException("User not found");

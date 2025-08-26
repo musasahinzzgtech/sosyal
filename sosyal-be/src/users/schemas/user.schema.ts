@@ -5,7 +5,7 @@ export type UserDocument = User & Document;
 
 export enum UserType {
   MUSTERI = "musteri",
-  ILAN_VEREN = "ilan-veren",
+  ISLETME = "isletme",
 }
 
 @Schema({ timestamps: true })
@@ -56,6 +56,23 @@ export class User extends Document {
   @Prop()
   priceRange?: string;
 
+  // Business-specific fields for ISLETME users
+  @Prop()
+  businessAddress?: string;
+
+  @Prop()
+  businessSector?: string;
+
+  @Prop()
+  businessServices?: string;
+
+  // Social media fields
+  @Prop()
+  instagram?: string;
+
+  @Prop()
+  facebook?: string;
+
   // Profile photos
   @Prop([String])
   photos?: string[];
@@ -96,6 +113,8 @@ UserSchema.index({
   lastName: "text",
   city: "text",
   services: "text",
+  businessServices: "text",
+  businessSector: "text",
 });
 
 // Compound index for user type and city

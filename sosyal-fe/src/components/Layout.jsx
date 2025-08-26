@@ -15,7 +15,7 @@ const Layout = () => {
         <div className="flex justify-between items-center">
           {/* Left side - Anasayfa */}
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <svg
                 className="w-5 h-5 text-white"
                 fill="none"
@@ -82,7 +82,7 @@ const Layout = () => {
                 </Link>
                 <Link
                   to="/register"
-                  className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg"
+                                     className="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg"
                 >
                   Kayıt Ol
                 </Link>
@@ -98,7 +98,7 @@ const Layout = () => {
         <div className="w-80 bg-white shadow-lg border-r border-gray-200 flex-shrink-0 overflow-hidden">
           <div className="h-full flex flex-col">
             {/* App Header */}
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6">
+                         <div className="bg-blue-600 text-white p-6">
               <div className="flex items-center space-x-3 mb-4">
                 <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
                   <svg
@@ -116,8 +116,8 @@ const Layout = () => {
                   </svg>
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold">Sosyal Platform</h1>
-                  <p className="text-blue-100 text-sm">Profesyonel Hizmet</p>
+                  <h1 className="text-xl font-bold">Ustamsağlam</h1>
+                  <p className="text-blue-100 text-sm">Otomotiv Hizmet Platformu</p>
                 </div>
               </div>
             </div>
@@ -140,12 +140,12 @@ const Layout = () => {
                       d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                     />
                   </svg>
-                  Platform Hakkında
+                  Ustamsağlam Hakkında
                 </h3>
                 <p className="text-blue-800 text-sm leading-relaxed">
-                  Türkiye'nin en güvenilir ve profesyonel hizmet platformu.
-                  Kaliteli hizmet veren profesyonelleri keşfedin ve güvenle
-                  iletişime geçin.
+                  Ustamsağlam'da arabanızı tamir ettirebileceğiniz işletmelere ulaşabilceksiniz.
+                  Türkiye'nin en güvenilir ve profesyonel otomotiv hizmet platformu.
+                  Kaliteli hizmet veren işletmeleri keşfedin ve güvenle iletişime geçin.
                 </p>
               </div>
 
@@ -243,32 +243,32 @@ const Layout = () => {
                       d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
                     />
                   </svg>
-                  Platform İstatistikleri
+                  Ustamsağlam İstatistikleri
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="text-center">
                     <div className="text-2xl font-bold text-purple-600">
-                      500+
+                      8,000+
                     </div>
-                    <div className="text-xs text-purple-700">Aktif Profil</div>
+                    <div className="text-xs text-purple-700">Kayıtlı İşletme</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-purple-600">
-                      50+
+                      67
                     </div>
                     <div className="text-xs text-purple-700">Şehir</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-purple-600">
-                      1000+
+                      25,000+
                     </div>
-                    <div className="text-xs text-purple-700">Mutlu Müşteri</div>
+                    <div className="text-xs text-purple-700">Kayıtlı Müşteri</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-purple-600">
-                      24/7
+                      96%
                     </div>
-                    <div className="text-xs text-purple-700">Destek</div>
+                    <div className="text-xs text-purple-700">Memnuniyet</div>
                   </div>
                 </div>
               </div>
@@ -322,7 +322,7 @@ const Layout = () => {
                         d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
                       />
                     </svg>
-                    info@sosyalplatform.com
+                    info@ustamsaglam.com
                   </div>
                   <div className="flex items-center">
                     <svg
@@ -351,7 +351,7 @@ const Layout = () => {
 
               {/* Footer */}
               <div className="text-center text-gray-500 text-xs pt-4 border-t border-gray-200">
-                <p>© 2024 Sosyal Platform</p>
+                <p>© 2024 Ustamsağlam</p>
                 <p className="mt-1">Tüm hakları saklıdır</p>
               </div>
             </div>
@@ -376,16 +376,16 @@ const Layout = () => {
             border-radius: 4px;
           }
 
-          .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-            border-radius: 4px;
-            transition: all 0.3s ease;
-          }
+                     .custom-scrollbar::-webkit-scrollbar-thumb {
+             background: #3b82f6;
+             border-radius: 4px;
+             transition: all 0.3s ease;
+           }
 
-          .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(135deg, #2563eb, #7c3aed);
-            transform: scale(1.1);
-          }
+           .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+             background: #2563eb;
+             transform: scale(1.1);
+           }
 
           .custom-scrollbar::-webkit-scrollbar-corner {
             background: #f1f5f9;

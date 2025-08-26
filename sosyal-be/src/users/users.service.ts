@@ -152,6 +152,15 @@ export class UsersService {
       birthDate: user.birthDate || null,
       lastSeen: user.lastSeen || null,
       createdAt: (user as any).createdAt || new Date(),
+      
+      // Business-specific fields
+      businessAddress: user.businessAddress || "",
+      businessSector: user.businessSector || "",
+      businessServices: user.businessServices || "",
+      
+      // Social media fields
+      instagram: user.instagram || "",
+      facebook: user.facebook || "",
     };
 
     console.log("Returning user details with ID field:", userDetails.id);
@@ -168,7 +177,7 @@ export class UsersService {
 
   async getServiceProviders(city?: string): Promise<User[]> {
     let query: any = {
-      userType: UserType.ILAN_VEREN,
+      userType: UserType.ISLETME,
       isActive: true,
     };
 
@@ -219,6 +228,22 @@ export class UsersService {
       .findByIdAndUpdate(
         userId,
         { $pull: { photos: photoUrl } },
+        { new: true, runValidators: true }
+      )
+      .select("-password -refreshToken");
+
+    if (!user) {
+      throw new NotFoundException("User not found");
+    }
+
+    return user;
+  }
+
+  async addBulkPhotos(userId: string, photoUrls: string[]): Promise<User> {
+    const user = await this.userModel
+      .findByIdAndUpdate(
+        userId,
+        { $push: { photos: { $each: photoUrls } } },
         { new: true, runValidators: true }
       )
       .select("-password -refreshToken");

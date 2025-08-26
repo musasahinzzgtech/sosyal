@@ -10,6 +10,11 @@ export declare class UsersController {
         photoUrl: string;
         filename: any;
     }>;
+    uploadPhotos(req: any, files: any[]): Promise<{
+        message: string;
+        photoUrls: string[];
+        count: number;
+    }>;
     removePhoto(req: any): Promise<{
         message: string;
     }>;

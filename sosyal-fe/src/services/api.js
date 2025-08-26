@@ -179,6 +179,29 @@ class ApiService {
     });
   }
 
+  async uploadPhotos(photoFiles) {
+    const formData = new FormData();
+    
+    if (photoFiles && photoFiles.length > 0) {
+      photoFiles.forEach((file) => {
+        formData.append("photos", file);
+      });
+    }
+
+    // For multipart form data, don't set Content-Type header
+    const headers = {};
+    const token = localStorage.getItem("accessToken");
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
+    return this.request("/users/upload-photos", {
+      method: "POST",
+      headers,
+      body: formData,
+    });
+  }
+
   async getUsers() {
     return this.request("/users");
   }

@@ -20,4 +20,5 @@ export declare class UsersService {
     getCustomers(city?: string): Promise<User[]>;
     addPhoto(userId: string, photoUrl: string): Promise<User>;
     removePhoto(userId: string, photoUrl: string): Promise<User>;
+    addBulkPhotos(userId: string, photoUrls: string[]): Promise<User>;
 }

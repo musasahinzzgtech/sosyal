@@ -139,50 +139,14 @@ const Messages = () => {
         const receiver = selectedChat.participants.find(
           (p) => (typeof p === "string" ? p : p._id) !== currentUser._id
         );
-        const receiverId = typeof receiver === "string" ? receiver : receiver._id;
+        const receiverId =
+          typeof receiver === "string" ? receiver : receiver._id;
 
         // Send message via WebSocket for real-time delivery
         socketService.sendMessage(receiverId, messageText.trim());
         console.log("receiverId", receiverId, receiver, selectedChat);
         // Also send via REST API for persistence
-        const response = await apiService.sendMessage(
-          receiverId,
-          messageText.trim()
-        );
-
-        // Update optimistic message with real data
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === tempMessageId
-              ? {
-                  ...msg,
-                  id: response._id || response.id,
-                  status: "sent",
-                  isOptimistic: false,
-                }
-              : msg
-          )
-        );
-
-        // Update message status
-        setMessageStatus((prev) => ({
-          ...prev,
-          [response._id || response.id]: "sent",
-        }));
-
-        // Update chat's last message
-        setChats((prev) =>
-          prev.map((chat) =>
-            chat.id === selectedChat.id
-              ? {
-                  ...chat,
-                  lastMessage: messageText.trim(),
-                  time: "Şimdi",
-                  unread: 0,
-                }
-              : chat
-          )
-        );
+   
       } catch (error) {
         console.error("Failed to send message:", error);
 

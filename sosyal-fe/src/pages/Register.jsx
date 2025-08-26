@@ -6,6 +6,11 @@ const Register = () => {
   const [photos, setPhotos] = useState([]);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  /*
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [map, setMap] = useState(null);
+  */
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -15,32 +20,124 @@ const Register = () => {
     confirmPassword: "",
     city: "",
     birthDate: "",
-    height: "",
-    weight: "",
-    age: "",
     skinColor: "",
-    services: "",
-    priceRange: "",
+    businessAddress: "",
+    businessSector: "",
+    businessServices: "",
+    /*
+    latitude: "",
+    longitude: "",
+    */
   });
 
-  const cities = [
-    "İstanbul",
-    "Ankara",
-    "İzmir",
-    "Bursa",
-    "Antalya",
-    "Adana",
-    "Konya",
-    "Gaziantep",
-    "Mersin",
-    "Diyarbakır",
-    "Samsun",
-    "Denizli",
-    "Eskişehir",
-    "Trabzon",
-    "Erzurum",
-  ];
+  const cities = ["İstanbul", "Ankara", "İzmir", "Adana", "Denizli"];
+  /*
+  // Google Maps API Key - Replace with your actual API key
+  const GOOGLE_MAPS_API_KEY = "YOUR_GOOGLE_MAPS_API_KEY";
 
+  // Load Google Maps API
+  useEffect(() => {
+    if (userType === "isletme" && !window.google) {
+      const script = document.createElement("script");
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`;
+      script.async = true;
+      script.defer = true;
+      script.onload = () => {
+        console.log("Google Maps API loaded");
+      };
+      document.head.appendChild(script);
+    }
+  }, [userType]);
+
+  // Initialize map when location picker is shown
+  useEffect(() => {
+    if (showLocationPicker && window.google && !map) {
+      const defaultLocation = { lat: 39.9334, lng: 32.8597 }; // Ankara
+      const mapInstance = new window.google.maps.Map(
+        document.getElementById("map"),
+        {
+          center: defaultLocation,
+          zoom: 13,
+          mapTypeControl: false,
+          streetViewControl: false,
+        }
+      );
+
+      const markerInstance = new window.google.maps.Marker({
+        position: defaultLocation,
+        map: mapInstance,
+        draggable: true,
+      });
+
+      setMap(mapInstance);
+
+      // Handle marker drag events
+      markerInstance.addListener("dragend", () => {
+        const position = markerInstance.getPosition();
+        setSelectedLocation({
+          lat: position.lat(),
+          lng: position.lng(),
+        });
+      });
+
+      // Handle map click events
+      mapInstance.addListener("click", (event) => {
+        const position = event.latLng;
+        markerInstance.setPosition(position);
+        setSelectedLocation({
+          lat: position.lat(),
+          lng: position.lng(),
+        });
+      });
+    }
+  }, [showLocationPicker, map]);
+
+  // Get address from coordinates
+  const getAddressFromCoordinates = async (lat, lng) => {
+    if (!window.google) return "";
+
+    const geocoder = new window.google.maps.Geocoder();
+    const latlng = { lat: parseFloat(lat), lng: parseFloat(lng) };
+
+    try {
+      const response = await geocoder.geocode({ location: latlng });
+      if (response.results[0]) {
+        return response.results[0].formatted_address;
+      }
+    } catch (error) {
+      console.error("Geocoding error:", error);
+    }
+    return "";
+  };
+
+  // Handle location selection
+  const handleLocationSelect = async () => {
+    if (selectedLocation) {
+      const address = await getAddressFromCoordinates(
+        selectedLocation.lat,
+        selectedLocation.lng
+      );
+      setFormData((prev) => ({
+        ...prev,
+        latitude: selectedLocation.lat.toString(),
+        longitude: selectedLocation.lng.toString(),
+        address: address,
+      }));
+      setShowLocationPicker(false);
+    }
+  };
+
+  // Clear location
+  const clearLocation = () => {
+    setSelectedLocation(null);
+    setFormData((prev) => ({
+      ...prev,
+      latitude: "",
+      longitude: "",
+      address: "",
+    }));
+  };
+*/
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -185,15 +282,13 @@ const Register = () => {
         password: formData.password,
         city: formData.city,
         birthDate: formData.birthDate,
-        height: formData.height || null,
-        weight: formData.weight || null,
-        age: formData.age || null,
-        skinColor: formData.skinColor || null, // Added skin color
-        userType: userType, // This will be 'musteri' or 'ilan-veren'
+
+        userType: userType, // This will be 'musteri' or 'isletme'
         // Add other service provider fields if applicable
-        ...(userType === "ilan-veren" && {
-          services: formData.services,
-          priceRange: formData.priceRange,
+        ...(userType === "isletme" && {
+          businessServices: formData.businessServices,
+          businessSector: formData.businessSector,
+          businessAddress: formData.businessAddress,
         }),
       };
 
@@ -202,7 +297,7 @@ const Register = () => {
 
       // Import API service dynamically to avoid circular dependencies
       const apiService = (await import("../services/api")).default;
-      const response = await apiService.register(userData, photoFiles);
+      await apiService.register(userData, photoFiles);
 
       alert("Hesap başarıyla oluşturuldu! Giriş yapabilirsiniz.");
 
@@ -223,11 +318,11 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-blue-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg
               className="w-8 h-8 text-white"
               fill="none"
@@ -246,7 +341,7 @@ const Register = () => {
             Hesap Oluştur
           </h1>
           <p className="text-gray-600">
-            Sosyal Platform'a katılın ve hizmetlerden yararlanın
+            Ustamsağlam'a katılın ve hizmetlerden yararlanın
           </p>
         </div>
 
@@ -254,18 +349,20 @@ const Register = () => {
         <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
           <div className="text-center mb-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              Neden Sosyal Platform?
+              Neden Ustamsağlam?
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Türkiye'nin en güvenilir ve profesyonel hizmet platformunda,
-              kaliteli hizmet verenler ile ihtiyaç sahiplerini buluşturuyoruz.
-              Güvenli, hızlı ve memnuniyet garantili hizmet deneyimi.
+              Ustamsağlam'da arabanızı tamir ettirebileceğiniz işletmelere
+              ulaşabilceksiniz. Türkiye'nin en güvenilir ve profesyonel otomotiv
+              hizmet platformunda, kaliteli hizmet verenler ile ihtiyaç
+              sahiplerini buluşturuyoruz. Güvenli, hızlı ve memnuniyet garantili
+              hizmet deneyimi.
             </p>
           </div>
 
           {/* Trust Indicators */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="text-center p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200">
+            <div className="text-center p-6 bg-blue-50 rounded-xl border border-blue-200">
               <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg
                   className="w-8 h-8 text-white"
@@ -290,7 +387,7 @@ const Register = () => {
               </p>
             </div>
 
-            <div className="text-center p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl border border-green-200">
+            <div className="text-center p-6 bg-green-50 rounded-xl border border-green-200">
               <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg
                   className="w-8 h-8 text-white"
@@ -314,7 +411,7 @@ const Register = () => {
               </p>
             </div>
 
-            <div className="text-center p-6 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl border border-purple-200">
+            <div className="text-center p-6 bg-purple-50 rounded-xl border border-purple-200">
               <div className="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg
                   className="w-8 h-8 text-white"
@@ -340,36 +437,36 @@ const Register = () => {
           </div>
 
           {/* Platform Statistics */}
-          <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
+          <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
             <h3 className="text-xl font-semibold text-gray-900 mb-6 text-center">
-              Platform İstatistikleri
+              Ustamsağlam İstatistikleri
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               <div className="text-center">
                 <div className="text-3xl font-bold text-blue-600 mb-2">
-                  50,000+
+                  25,000+
                 </div>
                 <div className="text-sm text-gray-600 font-medium">
-                  Kayıtlı Kullanıcı
+                  Kayıtlı Müşteri
                 </div>
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-green-600 mb-2">
-                  15,000+
+                  8,000+
                 </div>
                 <div className="text-sm text-gray-600 font-medium">
-                  Aktif Hizmet
+                  Kayıtlı İşletme
                 </div>
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-purple-600 mb-2">
-                  81
+                  67
                 </div>
                 <div className="text-sm text-gray-600 font-medium">Şehir</div>
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-orange-600 mb-2">
-                  98%
+                  96%
                 </div>
                 <div className="text-sm text-gray-600 font-medium">
                   Memnuniyet
@@ -392,7 +489,7 @@ const Register = () => {
                   Hesap Oluşturun
                 </h4>
                 <p className="text-gray-600 text-sm">
-                  Hızlı ve güvenli kayıt işlemi ile platforma katılın
+                  Hızlı ve güvenli kayıt işlemi ile Ustamsağlam'a katılın
                 </p>
               </div>
               <div className="text-center">
@@ -400,10 +497,11 @@ const Register = () => {
                   2
                 </div>
                 <h4 className="font-semibold text-gray-900 mb-2">
-                  Hizmet Bulun
+                  İşletme Bulun
                 </h4>
                 <p className="text-gray-600 text-sm">
-                  Gelişmiş filtreler ile ihtiyacınıza uygun hizmeti keşfedin
+                  Gelişmiş filtreler ile arabanızı tamir ettirebileceğiniz
+                  işletmeyi keşfedin
                 </p>
               </div>
               <div className="text-center">
@@ -414,14 +512,14 @@ const Register = () => {
                   İletişime Geçin
                 </h4>
                 <p className="text-gray-600 text-sm">
-                  Güvenli iletişim kanalları ile hizmet sağlayıcıya ulaşın
+                  Güvenli iletişim kanalları ile işletme sahibine ulaşın
                 </p>
               </div>
             </div>
           </div>
 
           {/* Security & Privacy */}
-          <div className="mt-8 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-200">
+          <div className="mt-8 p-6 bg-blue-50 rounded-xl border border-blue-200">
             <div className="flex items-center justify-center space-x-4 mb-4">
               <svg
                 className="w-8 h-8 text-blue-600"
@@ -538,22 +636,24 @@ const Register = () => {
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
                   Müşteri
                 </h3>
-                <p className="text-sm text-gray-600">Hizmet almak istiyorum</p>
+                <p className="text-sm text-gray-600">
+                  Aranan hizmeti bulmak istiyorum
+                </p>
               </div>
             </button>
 
             <button
-              onClick={() => setUserType("ilan-veren")}
+              onClick={() => setUserType("isletme")}
               className={`p-6 rounded-lg border-2 transition-all duration-200 ${
-                userType === "ilan-veren"
-                  ? "border-purple-500 bg-purple-50 shadow-md"
+                userType === "isletme"
+                  ? "border-blue-500 bg-blue-50 shadow-md"
                   : "border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100"
               }`}
             >
               <div className="text-center">
                 <div
                   className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 ${
-                    userType === "ilan-veren" ? "bg-purple-500" : "bg-gray-400"
+                    userType === "isletme" ? "bg-blue-500" : "bg-gray-400"
                   }`}
                 >
                   <svg
@@ -571,9 +671,9 @@ const Register = () => {
                   </svg>
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  İlan Veren
+                  İşletme
                 </h3>
-                <p className="text-sm text-gray-600">Hizmet vermek istiyorum</p>
+                <p className="text-sm text-gray-600">Sanayide dükkanım var</p>
               </div>
             </button>
           </div>
@@ -710,7 +810,9 @@ const Register = () => {
             {/* Photo Upload Section */}
             <div className="border-b border-gray-200 pb-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Profil Fotoğrafları
+                {userType === "musteri"
+                  ? "Profil Fotoğrafları"
+                  : "İşletme Fotoğrafları"}
               </h3>
               <div className="max-w-4xl">
                 {photos.length === 0 ? (
@@ -725,7 +827,7 @@ const Register = () => {
                     onDrop={handleDrop}
                   >
                     <div className="space-y-4">
-                      <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center">
+                      <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
                         <svg
                           className="w-8 h-8 text-blue-600"
                           fill="none"
@@ -750,7 +852,7 @@ const Register = () => {
                           seçin
                         </p>
 
-                        <label className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm font-medium rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 cursor-pointer transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg">
+                        <label className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-all duration-200 cursor-pointer transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg">
                           <svg
                             className="w-4 h-4 mr-2"
                             fill="none"
@@ -834,7 +936,7 @@ const Register = () => {
                       {/* Add More Photos Button */}
                       <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 cursor-pointer group">
                         <label className="w-full h-32 flex flex-col items-center justify-center cursor-pointer">
-                          <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mb-2 group-hover:from-blue-200 group-hover:to-purple-200 transition-all duration-200">
+                          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-2 group-hover:bg-blue-200 transition-all duration-200">
                             <svg
                               className="w-6 h-6 text-blue-600"
                               fill="none"
@@ -990,120 +1092,46 @@ const Register = () => {
               </div>
             </div>
 
-            {userType === "ilan-veren" && (
+            {userType === "isletme" && (
               <div className="border-b border-gray-200 pb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  İşletme Bilgileri
+                </h3>
                 <div className="space-y-4">
                   <div>
                     <label
-                      htmlFor="height"
+                      htmlFor="businessSector"
                       className="block text-sm font-medium text-gray-700 mb-2"
                     >
-                      Boy
-                    </label>
-                    <input
-                      type="number"
-                      id="height"
-                      name="height"
-                      value={formData.height}
-                      onChange={handleInputChange}
-                      min="100"
-                      max="250"
-                      step="1"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                      placeholder="175"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Santimetre cinsinden (opsiyonel)
-                    </p>
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="weight"
-                      className="block text-sm font-medium text-gray-700 mb-2"
-                    >
-                      Kilo
-                    </label>
-                    <input
-                      type="number"
-                      id="weight"
-                      name="weight"
-                      value={formData.weight}
-                      onChange={handleInputChange}
-                      min="30"
-                      max="200"
-                      step="0.5"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                      placeholder="70"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Kilogram cinsinden (opsiyonel)
-                    </p>
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="age"
-                      className="block text-sm font-medium text-gray-700 mb-2"
-                    >
-                      Yaş
-                    </label>
-                    <input
-                      type="number"
-                      id="age"
-                      name="age"
-                      value={formData.age}
-                      onChange={handleInputChange}
-                      min="18"
-                      max="100"
-                      step="1"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                      placeholder="25"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Yaşınız (opsiyonel)
-                    </p>
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="skinColor"
-                      className="block text-sm font-medium text-gray-700 mb-2"
-                    >
-                      Ten Rengi
+                      Hangi alanda çalışıyorsunuz?
                     </label>
                     <select
-                      id="skinColor"
-                      name="skinColor"
-                      value={formData.skinColor}
+                      id="businessSector"
+                      name="businessSector"
+                      value={formData.businessSector}
                       onChange={handleInputChange}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                     >
-                      <option value="">Ten rengi seçin</option>
-                      <option value="sarışın">Sarışın</option>
-                      <option value="kumral">Kumral</option>
-                      <option value="esmer">Esmer</option>
-                      <option value="siyahi">Siyahi</option>
-                      <option value="açık ten">Açık Ten</option>
-                      <option value="orta ten">Orta Ten</option>
-                      <option value="koyu ten">Koyu Ten</option>
+                      <option value={"elektirik"}>Elektrik</option>
+                      <option value={"kaporta"}>Kaporta</option>
+                      <option value={"boya"}>Boyama</option>
                     </select>
                     <p className="text-xs text-gray-500 mt-1">
-                      Ten renginizi seçin (opsiyonel)
+                      Hizmetlerinizi seçin
                     </p>
                   </div>
 
                   <div>
                     <label
-                      htmlFor="services"
+                      htmlFor="businessServices"
                       className="block text-sm font-medium text-gray-700 mb-2"
                     >
-                      Sunulan Hizmetler *
+                      Sanayide dükkanınızda hangi hizmetleri sunuyorsunuz?
                     </label>
                     <textarea
-                      id="services"
-                      name="services"
-                      value={formData.services}
+                      id="businessServices"
+                      name="businessServices"
+                      value={formData.businessServices}
                       onChange={handleInputChange}
                       required
                       rows="3"
@@ -1112,25 +1140,128 @@ const Register = () => {
                     />
                   </div>
 
+                  {/* Social Media Fields */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label
+                        htmlFor="instagram"
+                        className="block text-sm font-medium text-gray-700 mb-2"
+                      >
+                        Instagram Hesabı
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <svg
+                            className="h-5 w-5 text-gray-400"
+                            fill="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 6.62 5.367 11.987 11.988 11.987 6.62 0 11.987-5.367 11.987-11.987C24.014 5.367 18.637.001 12.017.001zM8.449 16.988c-1.297 0-2.448-.49-3.323-1.297C4.198 14.895 3.708 13.744 3.708 12.447s.49-2.448 1.297-3.323c.875-.807 2.026-1.297 3.323-1.297s2.448.49 3.323 1.297c.807.875 1.297 2.026 1.297 3.323s-.49 2.448-1.297 3.323c-.875.807-2.026 1.297-3.323 1.297zm7.718-1.297c-.49.49-1.141.807-1.892.807s-1.402-.317-1.892-.807c-.49-.49-.807-1.141-.807-1.892s.317-1.402.807-1.892c.49-.49 1.141-.807 1.892-.807s1.402.317 1.892.807c.49.49.807 1.141.807 1.892s-.317 1.402-.807 1.892z" />
+                          </svg>
+                        </div>
+                        <input
+                          type="text"
+                          id="instagram"
+                          name="instagram"
+                          value={formData.instagram}
+                          onChange={handleInputChange}
+                          className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                          placeholder="@kullaniciadi"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="facebook"
+                        className="block text-sm font-medium text-gray-700 mb-2"
+                      >
+                        Facebook Sayfası
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <svg
+                            className="h-5 w-5 text-gray-400"
+                            fill="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                          </svg>
+                        </div>
+                        <input
+                          type="text"
+                          id="facebook"
+                          name="facebook"
+                          value={formData.facebook}
+                          onChange={handleInputChange}
+                          className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                          placeholder="facebook.com/sayfaadi"
+                        />
+                      </div>
+                    </div>
+                  </div>
                   <div>
                     <label
-                      htmlFor="priceRange"
+                      htmlFor="fullAddress"
                       className="block text-sm font-medium text-gray-700 mb-2"
                     >
-                      Fiyat Aralığı
+                      İşletme Konumu
                     </label>
-                    <input
-                      type="text"
-                      id="priceRange"
-                      name="priceRange"
-                      value={formData.priceRange}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                      placeholder="Örn: 100-500 TL, 50€-200€, Ücretsiz-1000₺"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Hizmetlerinizin fiyat aralığını belirtin (opsiyonel)
-                    </p>
+
+                    {/* Location Picker Button */}
+                    <div className="space-y-3">
+                      <button
+                        type="button"
+                        className="w-full flex items-center justify-center space-x-2 px-4 py-3 border-2 border-dashed border-blue-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all duration-200"
+                      >
+                        <svg
+                          className="w-5 h-5 text-blue-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
+                        </svg>
+                        <span className="text-blue-600 font-medium">
+                          Konum Seçimi Yakında Eklenecek
+                        </span>
+                      </button>
+
+                      <p className="text-xs text-gray-500">
+                        İşletmenizin konumunu Google Maps'ten seçerek
+                        müşterilerinizin sizi kolayca bulmasını sağlayın.
+                      </p>
+                    </div>
+
+                    {/* Manual Address Input */}
+                    <div className="mt-4">
+                      <label
+                        htmlFor="businessAddress"
+                        className="block text-sm font-medium text-gray-700 mb-2"
+                      >
+                        Manuel Adres (Opsiyonel)
+                      </label>
+                      <textarea
+                        id="businessAddress"
+                        name="businessAddress"
+                        value={formData.businessAddress}
+                        onChange={handleInputChange}
+                        rows="3"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                        placeholder="Adresinizi manuel olarak girebilirsiniz..."
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1154,10 +1285,17 @@ const Register = () => {
 
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold py-3 px-6 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
+                className="w-full bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-blue-700 transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Kayıt Oluşturuluyor..." : "Hesap Oluştur"}
+                {isSubmitting ? (
+                  <div className="flex items-center justify-center space-x-2">
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Kayıt Oluşturuluyor...</span>
+                  </div>
+                ) : (
+                  "Hesap Oluştur"
+                )}
               </button>
             </div>
           </form>

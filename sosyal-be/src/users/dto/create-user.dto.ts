@@ -9,6 +9,7 @@ import {
   IsNumber,
   Min,
   Max,
+  ValidateIf,
 } from "class-validator";
 import { UserType } from "../schemas/user.schema";
 
@@ -70,6 +71,28 @@ export class CreateUserDto {
   @IsOptional()
   @IsString()
   priceRange?: string;
+
+  // Business-specific fields for ISLETME users
+  @ValidateIf(o => o.userType === UserType.ISLETME)
+  @IsString()
+  businessAddress?: string;
+
+  @ValidateIf(o => o.userType === UserType.ISLETME)
+  @IsString()
+  businessSector?: string;
+
+  @ValidateIf(o => o.userType === UserType.ISLETME)
+  @IsString()
+  businessServices?: string;
+
+  // Social media fields
+  @IsOptional()
+  @IsString()
+  instagram?: string;
+
+  @IsOptional()
+  @IsString()
+  facebook?: string;
 
   // Profile photos
   @IsOptional()

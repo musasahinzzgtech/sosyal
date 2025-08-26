@@ -79,6 +79,43 @@ export class UsersController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Post("upload-photos")
+  @UseInterceptors(
+    FilesInterceptor("photos", 10, {
+      storage: diskStorage({
+        destination: "./uploads/photos",
+        filename: (req, file, cb) => {
+          const randomName = Array(32)
+            .fill(null)
+            .map(() => Math.round(Math.random() * 16).toString(16))
+            .join("");
+          return cb(null, `${randomName}${extname(file.originalname)}`);
+        },
+      }),
+    })
+  )
+  async uploadPhotos(
+    @Request() req,
+    @UploadedFiles(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), // 5MB
+          new FileTypeValidator({ fileType: ".(jpg|jpeg|png|gif)" }),
+        ],
+      })
+    )
+    files: any[]
+  ) {
+    const photoUrls = files.map((file) => `/uploads/photos/${file.filename}`);
+    await this.usersService.addBulkPhotos(req.user.id, photoUrls);
+    return {
+      message: "Photos uploaded successfully",
+      photoUrls,
+      count: files.length,
+    };
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Delete("remove-photo")
   async removePhoto(@Request() req) {
     const url = req.body.url;
@@ -123,19 +160,41 @@ export class UsersController {
   ) {
     try {
       // Parse user data from string
-      const userData = JSON.parse(userDataString);
+      let userData;
+      try {
+        userData = JSON.parse(userDataString);
+      } catch (parseError) {
+        throw new BadRequestException("Invalid JSON format in userData");
+      }
 
       // Validate required fields
-      if (
-        !userData.firstName ||
-        !userData.lastName ||
-        !userData.email ||
-        !userData.password ||
-        !userData.city ||
-        !userData.birthDate ||
-        !userData.userType
-      ) {
-        throw new BadRequestException("Missing required fields");
+      const requiredFields = [
+        "firstName",
+        "lastName", 
+        "email",
+        "password",
+        "city",
+        "birthDate",
+        "userType"
+      ];
+      
+      const missingFields = requiredFields.filter(field => !userData[field]);
+      if (missingFields.length > 0) {
+        throw new BadRequestException(
+          `Missing required fields: ${missingFields.join(", ")}`
+        );
+      }
+
+      // Validate userType
+      if (!["musteri", "isletme"].includes(userData.userType)) {
+        throw new BadRequestException("Invalid userType. Must be 'musteri' or 'isletme'");
+      }
+
+      // Validate business fields for business users
+      if (userData.userType === "isletme") {
+        if (!userData.businessServices) {
+          throw new BadRequestException("businessServices is required for business users");
+        }
       }
 
       // Map frontend fields to backend DTO
@@ -154,9 +213,16 @@ export class UsersController {
         userType:
           userData.userType === "musteri"
             ? UserType.MUSTERI
-            : UserType.ILAN_VEREN,
+            : UserType.ISLETME,
         services: userData.services || "",
         priceRange: userData.priceRange || "",
+        // Business-specific fields
+        businessAddress: userData.businessAddress || undefined,
+        businessSector: userData.businessSector || undefined,
+        businessServices: userData.businessServices || undefined,
+        // Social media fields
+        instagram: userData.instagram || undefined,
+        facebook: userData.facebook || undefined,
       };
 
       // Handle photo uploads if provided
@@ -185,8 +251,11 @@ export class UsersController {
       if (error instanceof BadRequestException) {
         throw error;
       }
+      if (error.code === 11000) {
+        throw new BadRequestException("User with this email already exists");
+      }
       throw new BadRequestException(
-        "Invalid user data format or registration failed"
+        `Registration failed: ${error.message || "Unknown error"}`
       );
     }
   }

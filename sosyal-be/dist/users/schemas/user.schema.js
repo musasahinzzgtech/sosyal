@@ -15,7 +15,7 @@ const mongoose_2 = require("mongoose");
 var UserType;
 (function (UserType) {
     UserType["MUSTERI"] = "musteri";
-    UserType["ILAN_VEREN"] = "ilan-veren";
+    UserType["ISLETME"] = "isletme";
 })(UserType || (exports.UserType = UserType = {}));
 let User = class User extends mongoose_2.Document {
 };
@@ -77,6 +77,26 @@ __decorate([
     __metadata("design:type", String)
 ], User.prototype, "priceRange", void 0);
 __decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], User.prototype, "businessAddress", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], User.prototype, "businessSector", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], User.prototype, "businessServices", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], User.prototype, "instagram", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], User.prototype, "facebook", void 0);
+__decorate([
     (0, mongoose_1.Prop)([String]),
     __metadata("design:type", Array)
 ], User.prototype, "photos", void 0);
@@ -117,6 +137,8 @@ exports.UserSchema.index({
     lastName: "text",
     city: "text",
     services: "text",
+    businessServices: "text",
+    businessSector: "text",
 });
 exports.UserSchema.index({ userType: 1, city: 1 });
 exports.UserSchema.index({ email: 1 });
