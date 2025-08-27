@@ -21,8 +21,13 @@ const Profile = () => {
     facebook: "",
   });
 
-  const cities = ["İzmir", "Adana", "Denizli"];
-
+  const cities = [
+    { label: "İstanbul", value: "istanbul" },
+    { label: "Ankara", value: "ankara" },
+    { label: "İzmir", value: "izmir" },
+    { label: "Adana", value: "adana" },
+    { label: "Denizli", value: "denizli" },
+  ];
   // Initialize form data when user data is available
   useEffect(() => {
     if (user) {
@@ -167,12 +172,12 @@ const Profile = () => {
       setError(null);
 
       const apiService = (await import("../services/api")).default;
-      const result = await apiService.uploadPhoto(file);
+      const result = await apiService.uploadPhotos([file]);
 
       // Update local user data with new photo
       updateUser({
         ...user,
-        photos: [...(user.photos || []), result.photoUrl],
+      photos: [...(user.photos || []), result.photoUrls[0]],
       });
 
       setSuccessMessage("Fotoğraf başarıyla yüklendi!");
@@ -754,8 +759,8 @@ const Profile = () => {
                   >
                     <option value="">Şehir seçin</option>
                     {cities.map((city) => (
-                      <option key={city} value={city}>
-                        {city}
+                      <option key={city.value} value={city.value}>
+                        {city.label}
                       </option>
                     ))}
                   </select>

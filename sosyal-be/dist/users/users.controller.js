@@ -108,6 +108,7 @@ let UsersController = class UsersController {
                 userType: userData.userType === "musteri"
                     ? user_schema_1.UserType.MUSTERI
                     : user_schema_1.UserType.ISLETME,
+                businessName: userData.businessName || undefined,
                 businessAddress: userData.businessAddress || undefined,
                 businessSector: userData.businessSector || undefined,
                 businessServices: userData.businessServices || undefined,
@@ -199,12 +200,21 @@ __decorate([
                 return cb(null, `${randomName}${(0, path_1.extname)(file.originalname)}`);
             },
         }),
+        fileFilter: (req, file, cb) => {
+            const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif'];
+            const fileExtension = (0, path_1.extname)(file.originalname).toLowerCase();
+            if (allowedExtensions.includes(fileExtension)) {
+                cb(null, true);
+            }
+            else {
+                cb(new common_1.BadRequestException(`File type not allowed. Allowed types: ${allowedExtensions.join(', ')}`), false);
+            }
+        },
     })),
     __param(0, (0, common_1.Request)()),
-    __param(1, (0, common_1.UploadedFiles)(new common_1.ParseFilePipe({
+    __param(1, (0, common_1.UploadedFile)(new common_1.ParseFilePipe({
         validators: [
             new common_1.MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
-            new common_1.FileTypeValidator({ fileType: ".(jpg|jpeg|png|gif)" }),
         ],
     }))),
     __metadata("design:type", Function),
@@ -225,12 +235,21 @@ __decorate([
                 return cb(null, `${randomName}${(0, path_1.extname)(file.originalname)}`);
             },
         }),
+        fileFilter: (req, file, cb) => {
+            const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif'];
+            const fileExtension = (0, path_1.extname)(file.originalname).toLowerCase();
+            if (allowedExtensions.includes(fileExtension)) {
+                cb(null, true);
+            }
+            else {
+                cb(new common_1.BadRequestException(`File type not allowed. Allowed types: ${allowedExtensions.join(', ')}`), false);
+            }
+        },
     })),
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.UploadedFiles)(new common_1.ParseFilePipe({
         validators: [
             new common_1.MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
-            new common_1.FileTypeValidator({ fileType: ".(jpg|jpeg|png|gif)" }),
         ],
     }))),
     __metadata("design:type", Function),
@@ -270,6 +289,16 @@ __decorate([
                 return cb(null, `${randomName}${(0, path_1.extname)(file.originalname)}`);
             },
         }),
+        fileFilter: (req, file, cb) => {
+            const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif'];
+            const fileExtension = (0, path_1.extname)(file.originalname).toLowerCase();
+            if (allowedExtensions.includes(fileExtension)) {
+                cb(null, true);
+            }
+            else {
+                cb(new common_1.BadRequestException(`File type not allowed. Allowed types: ${allowedExtensions.join(', ')}`), false);
+            }
+        },
     })),
     __param(0, (0, common_1.Body)("userData")),
     __param(1, (0, common_1.UploadedFiles)()),

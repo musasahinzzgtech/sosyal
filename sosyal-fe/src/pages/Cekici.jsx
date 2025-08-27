@@ -1,13 +1,11 @@
 import { useState, useEffect } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
 
-const Home = () => {
+const Cekici = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  console.log(user);
   const [selectedCity, setSelectedCity] = useState("");
-  const [selectedSector, setSelectedSector] = useState("");
+  const [selectedSector] = useState("cekici");
   const [isLoading, setIsLoading] = useState(false);
   const [businesses, setBusinesses] = useState([]);
   const [cities] = useState([
@@ -15,12 +13,7 @@ const Home = () => {
     { label: "Adana", value: "adana" },
     { label: "Denizli", value: "denizli" },
   ]);
-  const [sectors] = useState([
-    { label: "Elektrik", value: "elektrik" },
-    { label: "Kaporta", value: "kaporta" },
-    { label: "Boyama", value: "boyama" },
-    { label: "Çekici", value: "cekici" },
-  ]);
+
   const [error, setError] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState({});
 
@@ -117,7 +110,6 @@ const Home = () => {
 
   const clearFilters = () => {
     setSelectedCity("");
-    setSelectedSector("");
   };
 
   const handleSendMessage = (business) => {
@@ -142,11 +134,6 @@ const Home = () => {
   };
 
   const handleViewProfile = (business) => {
-    if (business.id === user?.id) {
-      navigate("/profilim");
-    } else {
-      navigate(`/isletme/${business.id}`);
-    }
     // Navigate to business profile page (you can implement this later)
     console.log("View profile for:", business.name);
     // TODO: Implement navigation to business profile page
@@ -287,25 +274,6 @@ const Home = () => {
                 {cities.map((city) => (
                   <option key={city.value} value={city.value}>
                     {city.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Sector Filter */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                🏭 Sektör Seçin
-              </label>
-              <select
-                value={selectedSector}
-                onChange={(e) => setSelectedSector(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-              >
-                <option value="">Tüm Sektörler</option>
-                {sectors.map((sector) => (
-                  <option key={sector.value} value={sector.value}>
-                    {sector.label}
                   </option>
                 ))}
               </select>
@@ -503,11 +471,7 @@ const Home = () => {
                         </h3>
                       </div>
                       <p className="text-sm text-gray-600 mb-2">
-                        📍{" "}
-                        {
-                          cities.find((city) => city.value === business.city)
-                            ?.label
-                        }
+                        📍 {business.city}
                       </p>
                     </div>
                   </div>
@@ -577,16 +541,26 @@ const Home = () => {
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="grid grid-cols-2 gap-3">
-                    {/* Message Button */}
-                    {business?.id !== user?.id && (
-                      <button
-                        onClick={() => handleSendMessage(business)}
-                        className="w-full bg-blue-600 text-white py-2.5 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium text-sm"
-                      >
-                        <div className="flex items-center justify-center gap-2">
+                  <div className="grid grid-cols-2 gap-3 ">
+                    {/* Call Button */}
+                    <button
+                      onClick={() => handleSendMessage(business)}
+                      className="w-full group cursor-pointer relative overflow-hidden bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-2 rounded-2xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg font-semibold text-base"
+                    >
+                      <div className="flex items-center justify-center gap-3 ">
+                        <span>Mesaj Gönder</span>
+                      </div>
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-blue-600 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+                    </button>
+                    {/* View Profile Button */}
+                    <button
+                      onClick={() => handleViewProfile(business)}
+                      className="group relative overflow-hidden cursor-pointer bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 py-1 px-1 rounded-xl hover:from-gray-200 hover:to-gray-300 transition-all duration-300 transform hover:scale-105 hover:shadow-md font-medium text-sm border border-gray-200"
+                    >
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="w-5 h-5  bg-gray-300 rounded-full flex items-center justify-center">
                           <svg
-                            className="w-4 h-4"
+                            className="w-3 h-3"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -595,40 +569,19 @@ const Home = () => {
                               strokeLinecap="round"
                               strokeLinejoin="round"
                               strokeWidth={2}
-                              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                            />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
                             />
                           </svg>
-                          <span>Mesaj</span>
                         </div>
-                      </button>
-                    )}
-                    {/* View Profile Button */}
-                    <button
-                      onClick={() => handleViewProfile(business)}
-                      className="w-full bg-white text-gray-700 py-2.5 px-4 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-colors duration-200 font-medium text-sm"
-                    >
-                      <div className="flex items-center justify-center gap-2">
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                          />
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                          />
-                        </svg>
                         <span>Profili Gör</span>
                       </div>
+                      <div className="absolute inset-0 bg-gradient-to-r from-gray-200 to-gray-300 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
                     </button>
                   </div>
                   {/* Additional Info
@@ -653,4 +606,4 @@ const Home = () => {
   );
 };
 
-export default Home;
+export default Cekici;

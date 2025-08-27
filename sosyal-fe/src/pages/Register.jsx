@@ -31,7 +31,13 @@ const Register = () => {
     */
   });
 
-  const cities = ["İstanbul", "Ankara", "İzmir", "Adana", "Denizli"];
+  const cities = [
+    { label: "İstanbul", value: "istanbul" },
+    { label: "Ankara", value: "ankara" },
+    { label: "İzmir", value: "izmir" },
+    { label: "Adana", value: "adana" },
+    { label: "Denizli", value: "denizli" },
+  ];
   /*
   // Google Maps API Key - Replace with your actual API key
   const GOOGLE_MAPS_API_KEY = "YOUR_GOOGLE_MAPS_API_KEY";
@@ -306,7 +312,7 @@ const Register = () => {
       alert("Hesap başarıyla oluşturuldu! Giriş yapabilirsiniz.");
 
       // Redirect to login page
-      window.location.href = "/login";
+      window.location.href = "/giris-yap";
     } catch (error) {
       console.error("Registration failed:", error);
       let errorMessage = "Kayıt sırasında bir hata oluştu.";
@@ -344,17 +350,11 @@ const Register = () => {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Hesap Oluştur
           </h1>
-          <p className="text-gray-600">
-            Ustamsağlam'a katılın ve hizmetlerden yararlanın
-          </p>
         </div>
 
         {/* Platform Information Section */}
         <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
           <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              Neden Ustamsağlam?
-            </h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
               Ustamsağlam'da arabanızı tamir ettirebileceğiniz işletmelere
               ulaşabilceksiniz. Türkiye'nin en güvenilir ve profesyonel otomotiv
@@ -362,121 +362,6 @@ const Register = () => {
               sahiplerini buluşturuyoruz. Güvenli, hızlı ve memnuniyet garantili
               hizmet deneyimi.
             </p>
-          </div>
-
-          {/* Trust Indicators */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="text-center p-6 bg-blue-50 rounded-xl border border-blue-200">
-              <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg
-                  className="w-8 h-8 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-lg font-semibold text-blue-900 mb-2">
-                %100 Güvenli
-              </h3>
-              <p className="text-blue-800 text-sm">
-                SSL şifreleme, güvenli ödeme sistemleri ve kullanıcı doğrulama
-                ile tam koruma
-              </p>
-            </div>
-
-            <div className="text-center p-6 bg-green-50 rounded-xl border border-green-200">
-              <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg
-                  className="w-8 h-8 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 10V3L4 14h7v7l9-11h-7z"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-lg font-semibold text-green-900 mb-2">
-                Hızlı & Kolay
-              </h3>
-              <p className="text-green-800 text-sm">
-                Saniyeler içinde hesap oluşturun, dakikalar içinde hizmet bulun
-              </p>
-            </div>
-
-            <div className="text-center p-6 bg-purple-50 rounded-xl border border-purple-200">
-              <div className="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg
-                  className="w-8 h-8 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-lg font-semibold text-purple-900 mb-2">
-                Müşteri Odaklı
-              </h3>
-              <p className="text-purple-800 text-sm">
-                7/24 destek, memnuniyet garantisi ve kullanıcı dostu arayüz
-              </p>
-            </div>
-          </div>
-
-          {/* Platform Statistics */}
-          <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-            <h3 className="text-xl font-semibold text-gray-900 mb-6 text-center">
-              Ustamsağlam İstatistikleri
-            </h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-blue-600 mb-2">
-                  25,000+
-                </div>
-                <div className="text-sm text-gray-600 font-medium">
-                  Kayıtlı Müşteri
-                </div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-green-600 mb-2">
-                  8,000+
-                </div>
-                <div className="text-sm text-gray-600 font-medium">
-                  Kayıtlı İşletme
-                </div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-purple-600 mb-2">
-                  67
-                </div>
-                <div className="text-sm text-gray-600 font-medium">Şehir</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-orange-600 mb-2">
-                  96%
-                </div>
-                <div className="text-sm text-gray-600 font-medium">
-                  Memnuniyet
-                </div>
-              </div>
-            </div>
           </div>
 
           {/* How It Works */}
@@ -784,8 +669,8 @@ const Register = () => {
                   >
                     <option value="">Şehir seçin</option>
                     {cities.map((city) => (
-                      <option key={city} value={city}>
-                        {city}
+                      <option key={city.value} value={city.value}>
+                        {city.label}
                       </option>
                     ))}
                   </select>
@@ -1104,6 +989,27 @@ const Register = () => {
                 <div className="space-y-4">
                   <div>
                     <label
+                      htmlFor="businessName"
+                      className="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      İşletme Adı
+                    </label>
+                    <input
+                      type="text"
+                      id="businessName"
+                      name="businessName"
+                      value={formData.businessName}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                      placeholder="İşletmenizin adını giriniz..."
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      İşletmenizin adını giriniz.
+                    </p>
+                  </div>
+                  <div>
+                    <label
                       htmlFor="businessSector"
                       className="block text-sm font-medium text-gray-700 mb-2"
                     >
@@ -1248,14 +1154,7 @@ const Register = () => {
                         müşterilerinizin sizi kolayca bulmasını sağlayın.
                       </p>
                     </div>
-                    <div>
-                      <label
-                        htmlFor="businessName"
-                        className="block text-sm font-medium text-gray-700 mb-2"
-                      >
-                        İşletme Adı
-                      </label>
-                    </div>
+
                     {/* Manual Address Input */}
                     <div className="mt-4">
                       <label
