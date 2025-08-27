@@ -67,6 +67,7 @@ let ChatGateway = class ChatGateway {
     async handleMessage(data, client) {
         try {
             const message = await this.messagesService.createMessage(client.userId, data.receiverId, data.content, data.type, data.fileUrl, data.fileName, data.fileSize);
+            console.log("message", message);
             const sender = await this.usersService.findOne(client.userId);
             const messageData = {
                 id: message._id,
@@ -81,6 +82,7 @@ let ChatGateway = class ChatGateway {
             const receiverSocketId = this.connectedUsers.get(data.receiverId);
             if (receiverSocketId) {
                 this.server.to(receiverSocketId).emit('message:receive', messageData);
+                console.log("message:receive", messageData);
             }
             client.emit('message:sent', {
                 ...messageData,

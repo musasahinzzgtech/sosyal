@@ -120,6 +120,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         data.fileName,
         data.fileSize,
       );
+      console.log("message", message);
 
       // Get sender info from user service
       const sender = await this.usersService.findOne(client.userId);
@@ -139,6 +140,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const receiverSocketId = this.connectedUsers.get(data.receiverId);
       if (receiverSocketId) {
         this.server.to(receiverSocketId).emit('message:receive', messageData);
+        console.log("message:receive", messageData);
       }
 
       // Send confirmation to sender

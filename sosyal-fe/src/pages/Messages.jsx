@@ -515,6 +515,7 @@ const Messages = () => {
 
     // Listen for new messages
     socketService.onMessage("message:receive", (message) => {
+      console.log("message:receive", message);
       // Get current user ID from localStorage
       const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
       const isCurrentUser =
@@ -542,6 +543,7 @@ const Messages = () => {
           fileName: message.fileName,
           fileSize: message.fileSize,
         };
+        console.log("newMessage", newMessage);
 
         setMessages((prev) => [...prev, newMessage]);
 
