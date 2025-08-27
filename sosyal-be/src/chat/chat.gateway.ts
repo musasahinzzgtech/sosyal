@@ -6,12 +6,12 @@ import {
   ConnectedSocket,
   OnGatewayConnection,
   OnGatewayDisconnect,
-} from '@nestjs/websockets';
-import { Server, Socket } from 'socket.io';
-import { UseGuards } from '@nestjs/common';
-import { MessagesService } from '../messages/messages.service';
-import { UsersService } from '../users/users.service';
-import { WsJwtGuard } from './guards/ws-jwt.guard';
+} from "@nestjs/websockets";
+import { Server, Socket } from "socket.io";
+import { UseGuards } from "@nestjs/common";
+import { MessagesService } from "../messages/messages.service";
+import { UsersService } from "../users/users.service";
+import { WsJwtGuard } from "./guards/ws-jwt.guard";
 
 interface AuthenticatedSocket extends Socket {
   userId?: string;
@@ -20,10 +20,10 @@ interface AuthenticatedSocket extends Socket {
 
 @WebSocketGateway({
   cors: {
-    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+    origin: process.env.CORS_ORIGIN || "http://localhost:5173",
     credentials: true,
   },
-  namespace: '/chat',
+  namespace: "/chat",
 })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
@@ -33,7 +33,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   constructor(
     private messagesService: MessagesService,
-    private usersService: UsersService,
+    private usersService: UsersService
   ) {}
 
   async handleConnection(client: AuthenticatedSocket) {
@@ -66,14 +66,14 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       client.join(`user:${user.id}`);
 
       // Notify other users about this user coming online
-      client.broadcast.emit('user:online', {
+      client.broadcast.emit("user:online", {
         userId: user.id,
         timestamp: new Date(),
       });
 
       console.log(`User ${user.email} connected: ${client.id}`);
     } catch (error) {
-      console.error('Connection error:', error);
+      console.error("Connection error:", error);
       client.disconnect();
     }
   }
@@ -87,7 +87,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       await this.usersService.updateOnlineStatus(client.userId, false);
 
       // Notify other users about this user going offline
-      client.broadcast.emit('user:offline', {
+      client.broadcast.emit("user:offline", {
         userId: client.userId,
         timestamp: new Date(),
       });
@@ -97,9 +97,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @UseGuards(WsJwtGuard)
-  @SubscribeMessage('message:send')
+  @SubscribeMessage("message:send")
   async handleMessage(
-    @MessageBody() data: {
+    @MessageBody()
+    data: {
       receiverId: string;
       content: string;
       type?: string;
@@ -107,7 +108,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       fileName?: string;
       fileSize?: number;
     },
-    @ConnectedSocket() client: AuthenticatedSocket,
+    @ConnectedSocket() client: AuthenticatedSocket
   ) {
     try {
       // Create message in database
@@ -118,69 +119,74 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         data.type,
         data.fileUrl,
         data.fileName,
-        data.fileSize,
+        data.fileSize
       );
       console.log("message", message);
 
       // Get sender info from user service
       const sender = await this.usersService.findOne(client.userId);
 
+      // Convert Mongoose document to plain object
+      const messageObj = message.toObject();
+
       const messageData = {
-        id: message._id,
-        content: message.content,
-        type: message.type,
-        senderId: message.senderId,
-        receiverId: message.receiverId,
-        status: message.status,
-        createdAt: new Date(),
+        id: messageObj._id,
+        content: messageObj.content,
+        type: messageObj.type,
+        senderId: messageObj.senderId,
+        receiverId: messageObj.receiverId,
+        status: messageObj.status,
+        createdAt: messageObj.createdAt,
         sender: sender,
       };
 
       // Send to receiver if online
       const receiverSocketId = this.connectedUsers.get(data.receiverId);
       if (receiverSocketId) {
-        this.server.to(receiverSocketId).emit('message:receive', messageData);
+        this.server.to(receiverSocketId).emit("message:receive", messageData);
         console.log("message:receive", messageData);
       }
 
       // Send confirmation to sender
-      client.emit('message:sent', {
+      client.emit("message:sent", {
         ...messageData,
-        status: 'delivered',
+        status: "delivered",
       });
 
       // Emit typing stop event
-      this.server.to(`user:${data.receiverId}`).emit('typing:stop', {
+      this.server.to(`user:${data.receiverId}`).emit("typing:stop", {
         userId: client.userId,
       });
-
     } catch (error) {
-      console.error('Error sending message:', error);
-      client.emit('message:error', {
-        error: 'Failed to send message',
+      console.error("Error sending message:", error);
+      client.emit("message:error", {
+        error: "Failed to send message",
         details: error.message,
       });
     }
   }
 
   @UseGuards(WsJwtGuard)
-  @SubscribeMessage('message:read')
+  @SubscribeMessage("message:read")
   async handleMessageRead(
     @MessageBody() data: { messageId: string },
-    @ConnectedSocket() client: AuthenticatedSocket,
+    @ConnectedSocket() client: AuthenticatedSocket
   ) {
     try {
-      await this.messagesService.markMessageAsRead(data.messageId, client.userId);
+      await this.messagesService.markMessageAsRead(
+        data.messageId,
+        client.userId
+      );
 
       // Get the message to find the sender
       const message = await this.messagesService.findOne(data.messageId);
 
       if (message) {
         const senderSocketId = this.connectedUsers.get(
-          message.senderId.toString(),
+          message.senderId.toString()
         );
         if (senderSocketId) {
-          this.server.to(senderSocketId).emit('message:read', {
+          this.server.to(senderSocketId).emit("message:read", {
             messageId: data.messageId,
             readBy: client.userId,
             readAt: new Date(),
@@ -188,47 +194,47 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         }
       }
     } catch (error) {
-      console.error('Error marking message as read:', error);
+      console.error("Error marking message as read:", error);
     }
   }
 
   @UseGuards(WsJwtGuard)
-  @SubscribeMessage('typing:start')
+  @SubscribeMessage("typing:start")
   async handleTypingStart(
     @MessageBody() data: { receiverId: string },
-    @ConnectedSocket() client: AuthenticatedSocket,
+    @ConnectedSocket() client: AuthenticatedSocket
   ) {
     // Notify receiver that user is typing
-    this.server.to(`user:${data.receiverId}`).emit('typing:start', {
+    this.server.to(`user:${data.receiverId}`).emit("typing:start", {
       userId: client.userId,
     });
   }
 
   @UseGuards(WsJwtGuard)
-  @SubscribeMessage('typing:stop')
+  @SubscribeMessage("typing:stop")
   async handleTypingStop(
     @MessageBody() data: { receiverId: string },
-    @ConnectedSocket() client: AuthenticatedSocket,
+    @ConnectedSocket() client: AuthenticatedSocket
   ) {
     // Notify receiver that user stopped typing
-    this.server.to(`user:${data.receiverId}`).emit('typing:stop', {
+    this.server.to(`user:${data.receiverId}`).emit("typing:stop", {
       userId: client.userId,
     });
   }
 
   @UseGuards(WsJwtGuard)
-  @SubscribeMessage('user:typing')
+  @SubscribeMessage("user:typing")
   async handleUserTyping(
     @MessageBody() data: { receiverId: string; isTyping: boolean },
-    @ConnectedSocket() client: AuthenticatedSocket,
+    @ConnectedSocket() client: AuthenticatedSocket
   ) {
     if (data.isTyping) {
-      this.server.to(`user:${data.receiverId}`).emit('user:typing', {
+      this.server.to(`user:${data.receiverId}`).emit("user:typing", {
         userId: client.userId,
         isTyping: true,
       });
     } else {
-      this.server.to(`user:${data.receiverId}`).emit('user:typing', {
+      this.server.to(`user:${data.receiverId}`).emit("user:typing", {
         userId: client.userId,
         isTyping: false,
       });
@@ -239,15 +245,15 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private async verifyToken(token: string): Promise<any> {
     try {
       // This is a simplified verification - in production, use proper JWT verification
-      const jwt = require('jsonwebtoken');
+      const jwt = require("jsonwebtoken");
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      
+
       // Verify user exists and is active
       const user = await this.usersService.findOne(decoded.sub);
       if (!user || !user.isActive) {
         return null;
       }
-      
+
       return {
         id: user._id.toString(),
         email: user.email,

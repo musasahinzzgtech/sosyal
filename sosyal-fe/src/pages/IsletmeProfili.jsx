@@ -1,0 +1,654 @@
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import api from "../services/api";
+import Layout from "../components/Layout";
+
+const IsletmeProfili = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [business, setBusiness] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState("general");
+
+  useEffect(() => {
+    const fetchBusiness = async () => {
+      try {
+        setLoading(true);
+        const data = await api.getUser(id);
+        setBusiness(data);
+      } catch (err) {
+        console.error("Error fetching business:", err);
+        setError("İşletme bilgileri yüklenirken hata oluştu");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchBusiness();
+    }
+  }, [id]);
+
+  const handleCall = (phone) => {
+    if (phone) {
+      window.open(`tel:${phone}`, "_self");
+    }
+  };
+
+  const handleMessage = () => {
+    if (user) {
+      navigate(`/mesajlar?userId=${id}`);
+    } else {
+      navigate("/giris-yap");
+    }
+  };
+
+  const getSectorIcon = (sector) => {
+    const sectorIcons = {
+      cekici: "🚛",
+      elektrik: "⚡",
+      kaporta: "🔧",
+      boya: "🎨",
+      motor: "🏍️",
+      lastik: "🛞️",
+      akü: "🔋",
+      fren: "🛑",
+      suspansiyon: "🔄",
+      genel: "🔧",
+    };
+    return sectorIcons[sector?.toLowerCase()] || "🔧";
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("tr-TR", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">İşletme bilgileri yükleniyor...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error || !business) {
+    return (
+      <Layout>
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+          <div className="text-center bg-white p-8 rounded-2xl shadow-xl">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg
+                className="w-8 h-8 text-red-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Hata</h3>
+            <p className="text-gray-500 mb-4">
+              {error || "İşletme bulunamadı"}
+            </p>
+            <button
+              onClick={() => navigate("/")}
+              className="group relative overflow-hidden px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 transform hover:scale-105 hover:shadow-lg font-medium"
+            >
+              <div className="flex items-center gap-2">
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                  />
+                </svg>
+                <span>Ana Sayfaya Dön</span>
+              </div>
+            </button>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8">
+      <div className="max-w-4xl mx-auto px-4">
+        {/* Header */}
+        <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+            {/* Profile Image */}
+            <div className="relative">
+              <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+                {business.photos && business.photos.length > 0 ? (
+                  <img
+                    src={`http://localhost:3001${business.photos[0]}`}
+                    alt={
+                      business.businessName ||
+                      `${business.firstName} ${business.lastName}`
+                    }
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-2xl font-bold">
+                    {business.businessName
+                      ? business.businessName.charAt(0)
+                      : business.firstName?.charAt(0)}
+                  </div>
+                )}
+              </div>
+              <div
+                className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-white ${
+                  business.isOnline ? "bg-green-500" : "bg-gray-400"
+                }`}
+              ></div>
+            </div>
+
+            {/* Business Info */}
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-2">
+                <h1 className="text-3xl font-bold text-gray-900">
+                  {business.businessName ||
+                    `${business.firstName} ${business.lastName}`}
+                </h1>
+                <span className="text-2xl">
+                  {getSectorIcon(business.businessSector)}
+                </span>
+                {business.isVerified && (
+                  <div className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                    <svg
+                      className="w-3 h-3"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    Doğrulanmış
+                  </div>
+                )}
+              </div>
+
+              <p className="text-lg text-gray-600 mb-3">
+                {business.businessSector
+                  ? business.businessSector.charAt(0).toUpperCase() +
+                    business.businessSector.slice(1)
+                  : "Genel Hizmet"}
+              </p>
+
+              <div className="flex items-center gap-4 mb-4">
+                <div className="flex items-center gap-2 text-gray-600">
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                  </svg>
+                  <span>{business.city}</span>
+                </div>
+
+                {business.rating > 0 && (
+                  <div className="flex items-center gap-1">
+                    <div className="flex items-center">
+                      {[...Array(5)].map((_, i) => (
+                        <svg
+                          key={i}
+                          className={`w-4 h-4 ${
+                            i < Math.floor(business.rating)
+                              ? "text-yellow-400"
+                              : "text-gray-300"
+                          }`}
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                      ))}
+                    </div>
+                    <span className="text-sm text-gray-600">
+                      {business.rating.toFixed(1)} ({business.reviewCount}{" "}
+                      değerlendirme)
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-wrap gap-3">
+                {business.phone && (
+                  <button
+                    onClick={() => handleCall(business.phone)}
+                    className="group relative overflow-hidden px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 transition-all duration-300 transform hover:scale-105 hover:shadow-lg font-medium"
+                  >
+                    <div className="flex items-center gap-2">
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                        />
+                      </svg>
+                      <span>Ara</span>
+                    </div>
+                  </button>
+                )}
+
+                <button
+                  onClick={handleMessage}
+                  className="group relative overflow-hidden px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 transform hover:scale-105 hover:shadow-lg font-medium"
+                >
+                  <div className="flex items-center gap-2">
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                      />
+                    </svg>
+                    <span>Mesaj Gönder</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+          {/* Tab Navigation */}
+          <div className="border-b border-gray-200">
+            <nav className="flex">
+              <button
+                onClick={() => setActiveTab("general")}
+                className={`flex-1 px-6 py-4 text-sm font-medium transition-colors duration-200 ${
+                  activeTab === "general"
+                    ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50"
+                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  Genel Bilgiler
+                </div>
+              </button>
+              <button
+                onClick={() => setActiveTab("address")}
+                className={`flex-1 px-6 py-4 text-sm font-medium transition-colors duration-200 ${
+                  activeTab === "address"
+                    ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50"
+                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                  </svg>
+                  Adres Bilgileri
+                </div>
+              </button>
+            </nav>
+          </div>
+
+          {/* Tab Content */}
+          <div className="p-8">
+            {activeTab === "general" && (
+              <div className="space-y-6">
+                {/* Business Services */}
+                {business.businessServices && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                      Hizmetler
+                    </h3>
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <pre className="whitespace-pre-wrap text-gray-700 font-medium">
+                        {business.businessServices}
+                      </pre>
+                    </div>
+                  </div>
+                )}
+
+                {/* Contact Information */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                    İletişim Bilgileri
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                      <svg
+                        className="w-5 h-5 text-gray-500"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
+                        />
+                      </svg>
+                      <div>
+                        <p className="text-sm text-gray-500">E-posta</p>
+                        <p className="font-medium">{business.email}</p>
+                      </div>
+                    </div>
+
+                    {business.phone && (
+                      <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                        <svg
+                          className="w-5 h-5 text-gray-500"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                          />
+                        </svg>
+                        <div>
+                          <p className="text-sm text-gray-500">Telefon</p>
+                          <p className="font-medium">{business.phone}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Social Media */}
+                {(business.instagram || business.facebook) && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                      Sosyal Medya
+                    </h3>
+                    <div className="flex gap-4">
+                      {business.instagram && (
+                        <a
+                          href={`https://instagram.com/${business.instagram.replace(
+                            "@",
+                            ""
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all duration-300"
+                        >
+                          <svg
+                            className="w-5 h-5"
+                            fill="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.2-4.354-.2-6.782-2.617-6.979-6.98-.059-1.281-.073-1.69-.073-4.949 0-3.259.014-3.668.072-4.948.2-4.358 2.617-6.78 6.979-6.98 1.281-.059 1.69-.073 4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                          </svg>
+                          <span>{business.instagram}</span>
+                        </a>
+                      )}
+
+                      {business.facebook && (
+                        <a
+                          href={`https://facebook.com/${business.facebook.replace(
+                            "facebook.com/",
+                            ""
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300"
+                        >
+                          <svg
+                            className="w-5 h-5"
+                            fill="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                          </svg>
+                          <span>{business.facebook}</span>
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Additional Info */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                    Ek Bilgiler
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                      <svg
+                        className="w-5 h-5 text-gray-500"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
+                      </svg>
+                      <div>
+                        <p className="text-sm text-gray-500">Kayıt Tarihi</p>
+                        <p className="font-medium">
+                          {formatDate(business.createdAt)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                      <svg
+                        className="w-5 h-5 text-gray-500"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      <div>
+                        <p className="text-sm text-gray-500">Son Görülme</p>
+                        <p className="font-medium">
+                          {business.lastSeen
+                            ? formatDate(business.lastSeen)
+                            : "Bilinmiyor"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "address" && (
+              <div className="space-y-6">
+                {/* Business Address */}
+                {business.businessAddress && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                      İşletme Adresi
+                    </h3>
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <div className="flex items-start gap-3">
+                        <svg
+                          className="w-6 h-6 text-gray-500 mt-1"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
+                        </svg>
+                        <div>
+                          <p className="text-gray-700 font-medium">
+                            {business.businessAddress}
+                          </p>
+                          <p className="text-sm text-gray-500 mt-1">
+                            {business.city}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* City Information */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                    Şehir Bilgileri
+                  </h3>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="flex items-center gap-3">
+                      <svg
+                        className="w-6 h-6 text-gray-500"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                        />
+                      </svg>
+                      <div>
+                        <p className="text-gray-700 font-medium">
+                          Hizmet Bölgesi
+                        </p>
+                        <p className="text-sm text-gray-500">{business.city}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Map Placeholder */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                    Konum
+                  </h3>
+                  <div className="bg-gray-100 rounded-lg h-64 flex items-center justify-center">
+                    <div className="text-center text-gray-500">
+                      <svg
+                        className="w-16 h-16 mx-auto mb-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3"
+                        />
+                      </svg>
+                      <p>Harita görünümü yakında eklenecek</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default IsletmeProfili;

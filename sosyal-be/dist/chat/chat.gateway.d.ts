@@ -1,7 +1,7 @@
-import { OnGatewayConnection, OnGatewayDisconnect } from '@nestjs/websockets';
-import { Server, Socket } from 'socket.io';
-import { MessagesService } from '../messages/messages.service';
-import { UsersService } from '../users/users.service';
+import { OnGatewayConnection, OnGatewayDisconnect } from "@nestjs/websockets";
+import { Server, Socket } from "socket.io";
+import { MessagesService } from "../messages/messages.service";
+import { UsersService } from "../users/users.service";
 interface AuthenticatedSocket extends Socket {
     userId?: string;
     userEmail?: string;

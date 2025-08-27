@@ -42,14 +42,14 @@ let ChatGateway = class ChatGateway {
             this.connectedUsers.set(user.id, client.id);
             await this.usersService.updateOnlineStatus(user.id, true);
             client.join(`user:${user.id}`);
-            client.broadcast.emit('user:online', {
+            client.broadcast.emit("user:online", {
                 userId: user.id,
                 timestamp: new Date(),
             });
             console.log(`User ${user.email} connected: ${client.id}`);
         }
         catch (error) {
-            console.error('Connection error:', error);
+            console.error("Connection error:", error);
             client.disconnect();
         }
     }
@@ -57,7 +57,7 @@ let ChatGateway = class ChatGateway {
         if (client.userId) {
             this.connectedUsers.delete(client.userId);
             await this.usersService.updateOnlineStatus(client.userId, false);
-            client.broadcast.emit('user:offline', {
+            client.broadcast.emit("user:offline", {
                 userId: client.userId,
                 timestamp: new Date(),
             });
@@ -69,33 +69,34 @@ let ChatGateway = class ChatGateway {
             const message = await this.messagesService.createMessage(client.userId, data.receiverId, data.content, data.type, data.fileUrl, data.fileName, data.fileSize);
             console.log("message", message);
             const sender = await this.usersService.findOne(client.userId);
+            const messageObj = message.toObject();
             const messageData = {
-                id: message._id,
-                content: message.content,
-                type: message.type,
-                senderId: message.senderId,
-                receiverId: message.receiverId,
-                status: message.status,
-                createdAt: new Date(),
+                id: messageObj._id,
+                content: messageObj.content,
+                type: messageObj.type,
+                senderId: messageObj.senderId,
+                receiverId: messageObj.receiverId,
+                status: messageObj.status,
+                createdAt: messageObj.createdAt,
                 sender: sender,
             };
             const receiverSocketId = this.connectedUsers.get(data.receiverId);
             if (receiverSocketId) {
-                this.server.to(receiverSocketId).emit('message:receive', messageData);
+                this.server.to(receiverSocketId).emit("message:receive", messageData);
                 console.log("message:receive", messageData);
             }
-            client.emit('message:sent', {
+            client.emit("message:sent", {
                 ...messageData,
-                status: 'delivered',
+                status: "delivered",
             });
-            this.server.to(`user:${data.receiverId}`).emit('typing:stop', {
+            this.server.to(`user:${data.receiverId}`).emit("typing:stop", {
                 userId: client.userId,
             });
         }
         catch (error) {
-            console.error('Error sending message:', error);
-            client.emit('message:error', {
-                error: 'Failed to send message',
+            console.error("Error sending message:", error);
+            client.emit("message:error", {
+                error: "Failed to send message",
                 details: error.message,
             });
         }
@@ -107,7 +108,7 @@ let ChatGateway = class ChatGateway {
             if (message) {
                 const senderSocketId = this.connectedUsers.get(message.senderId.toString());
                 if (senderSocketId) {
-                    this.server.to(senderSocketId).emit('message:read', {
+                    this.server.to(senderSocketId).emit("message:read", {
                         messageId: data.messageId,
                         readBy: client.userId,
                         readAt: new Date(),
@@ -116,28 +117,28 @@ let ChatGateway = class ChatGateway {
             }
         }
         catch (error) {
-            console.error('Error marking message as read:', error);
+            console.error("Error marking message as read:", error);
         }
     }
     async handleTypingStart(data, client) {
-        this.server.to(`user:${data.receiverId}`).emit('typing:start', {
+        this.server.to(`user:${data.receiverId}`).emit("typing:start", {
             userId: client.userId,
         });
     }
     async handleTypingStop(data, client) {
-        this.server.to(`user:${data.receiverId}`).emit('typing:stop', {
+        this.server.to(`user:${data.receiverId}`).emit("typing:stop", {
             userId: client.userId,
         });
     }
     async handleUserTyping(data, client) {
         if (data.isTyping) {
-            this.server.to(`user:${data.receiverId}`).emit('user:typing', {
+            this.server.to(`user:${data.receiverId}`).emit("user:typing", {
                 userId: client.userId,
                 isTyping: true,
             });
         }
         else {
-            this.server.to(`user:${data.receiverId}`).emit('user:typing', {
+            this.server.to(`user:${data.receiverId}`).emit("user:typing", {
                 userId: client.userId,
                 isTyping: false,
             });
@@ -145,7 +146,7 @@ let ChatGateway = class ChatGateway {
     }
     async verifyToken(token) {
         try {
-            const jwt = require('jsonwebtoken');
+            const jwt = require("jsonwebtoken");
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
             const user = await this.usersService.findOne(decoded.sub);
             if (!user || !user.isActive) {
@@ -174,7 +175,7 @@ __decorate([
 ], ChatGateway.prototype, "server", void 0);
 __decorate([
     (0, common_1.UseGuards)(ws_jwt_guard_1.WsJwtGuard),
-    (0, websockets_1.SubscribeMessage)('message:send'),
+    (0, websockets_1.SubscribeMessage)("message:send"),
     __param(0, (0, websockets_1.MessageBody)()),
     __param(1, (0, websockets_1.ConnectedSocket)()),
     __metadata("design:type", Function),
@@ -183,7 +184,7 @@ __decorate([
 ], ChatGateway.prototype, "handleMessage", null);
 __decorate([
     (0, common_1.UseGuards)(ws_jwt_guard_1.WsJwtGuard),
-    (0, websockets_1.SubscribeMessage)('message:read'),
+    (0, websockets_1.SubscribeMessage)("message:read"),
     __param(0, (0, websockets_1.MessageBody)()),
     __param(1, (0, websockets_1.ConnectedSocket)()),
     __metadata("design:type", Function),
@@ -192,7 +193,7 @@ __decorate([
 ], ChatGateway.prototype, "handleMessageRead", null);
 __decorate([
     (0, common_1.UseGuards)(ws_jwt_guard_1.WsJwtGuard),
-    (0, websockets_1.SubscribeMessage)('typing:start'),
+    (0, websockets_1.SubscribeMessage)("typing:start"),
     __param(0, (0, websockets_1.MessageBody)()),
     __param(1, (0, websockets_1.ConnectedSocket)()),
     __metadata("design:type", Function),
@@ -201,7 +202,7 @@ __decorate([
 ], ChatGateway.prototype, "handleTypingStart", null);
 __decorate([
     (0, common_1.UseGuards)(ws_jwt_guard_1.WsJwtGuard),
-    (0, websockets_1.SubscribeMessage)('typing:stop'),
+    (0, websockets_1.SubscribeMessage)("typing:stop"),
     __param(0, (0, websockets_1.MessageBody)()),
     __param(1, (0, websockets_1.ConnectedSocket)()),
     __metadata("design:type", Function),
@@ -210,7 +211,7 @@ __decorate([
 ], ChatGateway.prototype, "handleTypingStop", null);
 __decorate([
     (0, common_1.UseGuards)(ws_jwt_guard_1.WsJwtGuard),
-    (0, websockets_1.SubscribeMessage)('user:typing'),
+    (0, websockets_1.SubscribeMessage)("user:typing"),
     __param(0, (0, websockets_1.MessageBody)()),
     __param(1, (0, websockets_1.ConnectedSocket)()),
     __metadata("design:type", Function),
@@ -220,10 +221,10 @@ __decorate([
 exports.ChatGateway = ChatGateway = __decorate([
     (0, websockets_1.WebSocketGateway)({
         cors: {
-            origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+            origin: process.env.CORS_ORIGIN || "http://localhost:5173",
             credentials: true,
         },
-        namespace: '/chat',
+        namespace: "/chat",
     }),
     __metadata("design:paramtypes", [messages_service_1.MessagesService,
         users_service_1.UsersService])
