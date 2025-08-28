@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { cities, sectors } from "../constants";
 
@@ -7,11 +7,10 @@ const Register = () => {
   const [photos, setPhotos] = useState([]);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  /*
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [map, setMap] = useState(null);
-  */
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -32,13 +31,12 @@ const Register = () => {
     */
   });
 
-  /*
   // Google Maps API Key - Replace with your actual API key
-  const GOOGLE_MAPS_API_KEY = "YOUR_GOOGLE_MAPS_API_KEY";
+  const GOOGLE_MAPS_API_KEY = "AIzaSyCTvXx2qxlKEHARt68erbxKviGoBq3F7Nk";
 
   // Load Google Maps API
   useEffect(() => {
-    if (userType === "isletme" && !window.google) {
+    if (!window.google) {
       const script = document.createElement("script");
       script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`;
       script.async = true;
@@ -48,7 +46,7 @@ const Register = () => {
       };
       document.head.appendChild(script);
     }
-  }, [userType]);
+  }, []);
 
   // Initialize map when location picker is shown
   useEffect(() => {
@@ -61,6 +59,15 @@ const Register = () => {
           zoom: 13,
           mapTypeControl: false,
           streetViewControl: false,
+          fullscreenControl: true,
+          zoomControl: true,
+          styles: [
+            {
+              featureType: "poi",
+              elementType: "labels",
+              stylers: [{ visibility: "off" }]
+            }
+          ]
         }
       );
 
@@ -68,6 +75,17 @@ const Register = () => {
         position: defaultLocation,
         map: mapInstance,
         draggable: true,
+        icon: {
+          url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="16" cy="16" r="16" fill="#3B82F6" fill-opacity="0.2"/>
+              <circle cx="16" cy="16" r="8" fill="#3B82F6"/>
+              <circle cx="16" cy="16" r="4" fill="white"/>
+            </svg>
+          `),
+          scaledSize: new window.google.maps.Size(32, 32),
+          anchor: new window.google.maps.Point(16, 16)
+        }
       });
 
       setMap(mapInstance);
@@ -90,6 +108,41 @@ const Register = () => {
           lng: position.lng(),
         });
       });
+
+      // Initialize search box
+      const searchBox = document.getElementById("searchBox");
+      if (searchBox) {
+        const searchBoxInstance = new window.google.maps.places.SearchBox(searchBox);
+        
+        // Bias the SearchBox results towards current map's viewport
+        mapInstance.addListener("bounds_changed", () => {
+          searchBoxInstance.setBounds(mapInstance.getBounds());
+        });
+
+        // Listen for the event fired when the user selects a prediction
+        searchBoxInstance.addListener("places_changed", () => {
+          const places = searchBoxInstance.getPlaces();
+          if (places.length === 0) return;
+
+          const place = places[0];
+          if (!place.geometry || !place.geometry.location) return;
+
+          // If the place has a geometry, then present it on a map
+          if (place.geometry.viewport) {
+            mapInstance.fitBounds(place.geometry.viewport);
+          } else {
+            mapInstance.setCenter(place.geometry.location);
+            mapInstance.setZoom(17);
+          }
+
+          // Set marker position
+          markerInstance.setPosition(place.geometry.location);
+          setSelectedLocation({
+            lat: place.geometry.location.lat(),
+            lng: place.geometry.location.lng(),
+          });
+        });
+      }
     }
   }, [showLocationPicker, map]);
 
@@ -138,7 +191,40 @@ const Register = () => {
       address: "",
     }));
   };
-*/
+
+  // Get current location
+  const getCurrentLocation = () => {
+    if (navigator.geolocation) {
+      setIsGettingLocation(true);
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setSelectedLocation({ lat: latitude, lng: longitude });
+          
+          // Update map if it exists
+          if (map) {
+            const newPosition = { lat: latitude, lng: longitude };
+            map.setCenter(newPosition);
+            map.setZoom(16);
+            
+            // Update marker position
+            const markers = map.getMarkers?.() || [];
+            if (markers.length > 0) {
+              markers[0].setPosition(newPosition);
+            }
+          }
+          setIsGettingLocation(false);
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+          alert("Konum alınamadı. Lütfen manuel olarak seçin.");
+          setIsGettingLocation(false);
+        }
+      );
+    } else {
+      alert("Tarayıcınız konum özelliğini desteklemiyor.");
+    }
+  };
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -1118,6 +1204,7 @@ const Register = () => {
                     <div className="space-y-3">
                       <button
                         type="button"
+                        onClick={() => setShowLocationPicker(true)}
                         className="w-full flex items-center justify-center space-x-2 px-4 py-3 border-2 border-dashed border-blue-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all duration-200"
                       >
                         <svg
@@ -1140,9 +1227,34 @@ const Register = () => {
                           />
                         </svg>
                         <span className="text-blue-600 font-medium">
-                          Konum Seçimi Yakında Eklenecek
+                          Konum Seçimi
                         </span>
                       </button>
+
+                      {/* Selected Location Display */}
+                      {selectedLocation && (
+                        <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2">
+                              <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                              <span className="text-sm text-green-800 font-medium">
+                                Konum Seçildi
+                              </span>
+                            </div>
+                            <button
+                              onClick={clearLocation}
+                              className="text-red-500 hover:text-red-700 text-sm font-medium"
+                            >
+                              Temizle
+                            </button>
+                          </div>
+                          <p className="text-xs text-green-700 mt-1">
+                            Lat: {selectedLocation.lat.toFixed(6)}, Lng: {selectedLocation.lng.toFixed(6)}
+                          </p>
+                        </div>
+                      )}
 
                       <p className="text-xs text-gray-500">
                         İşletmenizin konumunu Google Maps'ten seçerek
@@ -1211,7 +1323,7 @@ const Register = () => {
             <p className="text-gray-600">
               Zaten hesabınız var mı?{" "}
               <Link
-                to="/login"
+                to="/giris-yap"
                 className="text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200"
               >
                 Giriş yapın
@@ -1220,6 +1332,142 @@ const Register = () => {
           </div>
         </div>
       </div>
+
+      {/* Google Maps Location Picker Modal */}
+      {showLocationPicker && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200">
+              <div>
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
+                  Konum Seçimi
+                </h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  Haritada işletmenizin konumunu seçin veya sürükleyin
+                </p>
+              </div>
+              <button
+                onClick={() => setShowLocationPicker(false)}
+                className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Map Container */}
+            <div className="p-4 sm:p-6">
+              <div className="relative">
+                {/* Search Box and Current Location */}
+                <div className="mb-4 space-y-3">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      id="searchBox"
+                      placeholder="Adres veya yer ara..."
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                    />
+                    <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <button
+                      onClick={getCurrentLocation}
+                      disabled={isGettingLocation}
+                      className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed transition-colors duration-200 text-sm font-medium"
+                    >
+                      {isGettingLocation ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          <span>Konum Alınıyor...</span>
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          </svg>
+                          <span>Mevcut Konumum</span>
+                        </>
+                      )}
+                    </button>
+                    
+                    <button
+                      onClick={() => {
+                        if (map) {
+                          map.setCenter({ lat: 39.9334, lng: 32.8597 }); // Ankara
+                          map.setZoom(13);
+                        }
+                      }}
+                      className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200 text-sm font-medium"
+                    >
+                      Ankara'ya Git
+                    </button>
+                  </div>
+                </div>
+
+                {/* Map */}
+                <div className="relative">
+                  <div 
+                    id="map" 
+                    className="w-full h-96 sm:h-[500px] rounded-lg border border-gray-200 shadow-sm"
+                  ></div>
+                  
+                  {/* Map Loading Overlay */}
+                  {!map && (
+                    <div className="absolute inset-0 bg-gray-100 rounded-lg flex items-center justify-center">
+                      <div className="text-center">
+                        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                        <p className="text-sm text-gray-600">Harita yükleniyor...</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Map Instructions */}
+                <div className="mt-3 text-center">
+                  <p className="text-sm text-gray-600">
+                    💡 Haritaya tıklayarak veya işaretçiyi sürükleyerek konum seçin
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex flex-col sm:flex-row gap-3 p-4 sm:p-6 border-t border-gray-200 bg-gray-50">
+              <div className="flex-1">
+                {selectedLocation && (
+                  <div className="text-sm text-gray-700">
+                    <span className="font-medium">Seçilen Konum:</span>
+                    <br />
+                    <span className="text-gray-600">
+                      Enlem: {selectedLocation.lat.toFixed(6)}, Boylam: {selectedLocation.lng.toFixed(6)}
+                    </span>
+                  </div>
+                )}
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowLocationPicker(false)}
+                  className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200 font-medium"
+                >
+                  İptal
+                </button>
+                <button
+                  onClick={handleLocationSelect}
+                  disabled={!selectedLocation}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors duration-200 font-medium"
+                >
+                  Konumu Seç
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
