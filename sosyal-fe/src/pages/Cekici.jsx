@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { cities } from "../constants";
 
 const Cekici = () => {
   const navigate = useNavigate();
@@ -9,11 +10,6 @@ const Cekici = () => {
   const [selectedSector] = useState("cekici");
   const [isLoading, setIsLoading] = useState(false);
   const [businesses, setBusinesses] = useState([]);
-  const [cities] = useState([
-    { label: "İzmir", value: "izmir" },
-    { label: "Adana", value: "adana" },
-    { label: "Denizli", value: "denizli" },
-  ]);
 
   const [error, setError] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState({});

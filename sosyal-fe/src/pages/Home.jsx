@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { cities, sectors } from "../constants";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -10,18 +11,7 @@ const Home = () => {
   const [selectedSector, setSelectedSector] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [businesses, setBusinesses] = useState([]);
-  const [cities] = useState([
-    { label: "İzmir", value: "izmir" },
-    { label: "Adana", value: "adana" },
-    { label: "Denizli", value: "denizli" },
-  ]);
-  const [sectors] = useState([
-    { label: "Elektrik", value: "elektrik" },
-    { label: "Kaporta", value: "kaporta" },
-    { label: "Boyama", value: "boyama" },
-    { label: "Çekici", value: "cekici" },
-    { label: "Ekspertiz", value: "ekspertiz" },
-  ]);
+
   const [error, setError] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState({});
 
@@ -583,7 +573,7 @@ const Home = () => {
                   {/* Action Buttons */}
                   <div className="grid grid-cols-2 gap-3">
                     {/* Message Button */}
-                    {business?.id !== user?.id && (
+                    {business?.id !== user?.id && user?.id && (
                       <button
                         onClick={() => handleSendMessage(business)}
                         className="w-full bg-blue-600 text-white py-2.5 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium text-sm"

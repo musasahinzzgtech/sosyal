@@ -79,10 +79,10 @@ const Login = () => {
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
           <div className="text-center">
             <h2 className="text-xl font-semibold text-gray-900 mb-3">
-              Ustamsağlam'a Hoş Geldiniz
+              OTOMedik'a Hoş Geldiniz
             </h2>
             <p className="text-gray-600 mb-4">
-              Ustamsağlam'da arabanızı tamir ettirebileceğiniz işletmelere
+              OTOMedik'da arabanızı tamir ettirebileceğiniz işletmelere
               ulaşabilceksiniz. Türkiye'nin en güvenilir ve profesyonel otomotiv
               hizmet platformunda binlerce işletme ile tanışın
             </p>

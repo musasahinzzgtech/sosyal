@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
+import { cities, sectors } from "../constants";
 
 const Profile = () => {
   const { user, updateUser } = useAuth();
@@ -21,13 +22,6 @@ const Profile = () => {
     facebook: "",
   });
 
-  const cities = [
-    { label: "İstanbul", value: "istanbul" },
-    { label: "Ankara", value: "ankara" },
-    { label: "İzmir", value: "izmir" },
-    { label: "Adana", value: "adana" },
-    { label: "Denizli", value: "denizli" },
-  ];
   // Initialize form data when user data is available
   useEffect(() => {
     if (user) {
@@ -177,7 +171,7 @@ const Profile = () => {
       // Update local user data with new photo
       updateUser({
         ...user,
-      photos: [...(user.photos || []), result.photoUrls[0]],
+        photos: [...(user.photos || []), result.photoUrls[0]],
       });
 
       setSuccessMessage("Fotoğraf başarıyla yüklendi!");
@@ -818,10 +812,11 @@ const Profile = () => {
                       onChange={handleInputChange}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
                     >
-                      <option value={"elektirik"}>Elektrik</option>
-                      <option value={"kaporta"}>Kaporta</option>
-                      <option value={"boya"}>Boyama</option>
-                      <option value={"cekici"}>Çekici</option>
+                      {sectors.map((sector) => (
+                        <option key={sector.value} value={sector.value}>
+                          {sector.label}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <div>

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import api from "../services/api";
 import Layout from "../components/Layout";
+import { cities } from "../constants";
 
 const IsletmeProfili = () => {
   const { id } = useParams();
@@ -19,11 +20,7 @@ const IsletmeProfili = () => {
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [reviewsPage, setReviewsPage] = useState(1);
   const [reviewsPagination, setReviewsPagination] = useState({});
-  const [cities] = useState([
-    { label: "İzmir", value: "izmir" },
-    { label: "Adana", value: "adana" },
-    { label: "Denizli", value: "denizli" },
-  ]);
+
   useEffect(() => {
     const fetchBusiness = async () => {
       try {

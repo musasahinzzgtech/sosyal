@@ -60,6 +60,10 @@ class ApiService {
             }
             return JSON.parse(retryText);
           } else {
+            localStorage.removeItem("accessToken");
+            localStorage.removeItem("refreshToken");
+            localStorage.removeItem("user");
+            window.location.href = "/giris-yap";
             // Refresh failed, redirect to login
             throw new Error("Authentication failed");
           }
@@ -333,7 +337,9 @@ class ApiService {
   }
 
   async getBusinessReviews(businessId, page = 1, limit = 10) {
-    return this.request(`/reviews/business/${businessId}?page=${page}&limit=${limit}`);
+    return this.request(
+      `/reviews/business/${businessId}?page=${page}&limit=${limit}`
+    );
   }
 
   async getUserReview(businessId) {

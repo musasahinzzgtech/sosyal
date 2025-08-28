@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { cities, sectors } from "../constants";
 
 const Register = () => {
   const [userType, setUserType] = useState("musteri");
@@ -31,13 +32,6 @@ const Register = () => {
     */
   });
 
-  const cities = [
-    { label: "İstanbul", value: "istanbul" },
-    { label: "Ankara", value: "ankara" },
-    { label: "İzmir", value: "izmir" },
-    { label: "Adana", value: "adana" },
-    { label: "Denizli", value: "denizli" },
-  ];
   /*
   // Google Maps API Key - Replace with your actual API key
   const GOOGLE_MAPS_API_KEY = "YOUR_GOOGLE_MAPS_API_KEY";
@@ -356,7 +350,7 @@ const Register = () => {
         <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
           <div className="text-center mb-8">
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Ustamsağlam'da arabanızı tamir ettirebileceğiniz işletmelere
+              OTOMedik'da arabanızı tamir ettirebileceğiniz işletmelere
               ulaşabilceksiniz. Türkiye'nin en güvenilir ve profesyonel otomotiv
               hizmet platformunda, kaliteli hizmet verenler ile ihtiyaç
               sahiplerini buluşturuyoruz. Güvenli, hızlı ve memnuniyet garantili
@@ -378,7 +372,7 @@ const Register = () => {
                   Hesap Oluşturun
                 </h4>
                 <p className="text-gray-600 text-sm">
-                  Hızlı ve güvenli kayıt işlemi ile Ustamsağlam'a katılın
+                  Hızlı ve güvenli kayıt işlemi ile OTOMedik'a katılın
                 </p>
               </div>
               <div className="text-center">
@@ -1022,10 +1016,11 @@ const Register = () => {
                       onChange={handleInputChange}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                     >
-                      <option value={"elektirik"}>Elektrik</option>
-                      <option value={"kaporta"}>Kaporta</option>
-                      <option value={"boya"}>Boyama</option>
-                      <option value={"cekici"}>Çekici</option>
+                      {sectors.map((sector) => (
+                        <option key={sector.value} value={sector.value}>
+                          {sector.label}
+                        </option>
+                      ))}
                     </select>
                     <p className="text-xs text-gray-500 mt-1">
                       Hizmetlerinizi seçin

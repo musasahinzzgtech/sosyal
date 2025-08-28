@@ -44,8 +44,17 @@ const Layout = () => {
                 </svg>
               </div>
             </Link>
+            <Link to="/">
+              <h1 className="text-xl font-bold">OTOMedik</h1>
+            </Link>
           </div>
           <div className="flex items-center">
+            <Link
+              to="/hakkimizda"
+              className="inline-flex items-center px-4 py-2 text-gray-700 hover:text-blue-600 font-medium transition-all duration-200 hover:bg-blue-50 rounded-lg group"
+            >
+              Hakkımızda
+            </Link>
             <Link
               to="/cekici-hizmetleri"
               className="inline-flex items-center px-4 py-2 text-gray-700 hover:text-blue-600 font-medium transition-all duration-200 hover:bg-blue-50 rounded-lg group"
