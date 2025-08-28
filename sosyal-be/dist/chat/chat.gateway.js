@@ -69,7 +69,7 @@ let ChatGateway = class ChatGateway {
             const message = await this.messagesService.createMessage(client.userId, data.receiverId, data.content, data.type, data.fileUrl, data.fileName, data.fileSize);
             console.log("message", message);
             const sender = await this.usersService.findOne(client.userId);
-            const messageObj = message.toObject();
+            const messageObj = message._doc;
             const messageData = {
                 id: messageObj._id,
                 content: messageObj.content,

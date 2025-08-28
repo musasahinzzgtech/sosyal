@@ -127,7 +127,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const sender = await this.usersService.findOne(client.userId);
 
       // Convert Mongoose document to plain object
-      const messageObj = message.toObject();
+      const messageObj = message._doc;
 
       const messageData = {
         id: messageObj._id,

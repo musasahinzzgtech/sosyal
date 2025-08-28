@@ -50,13 +50,13 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-blue-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-blue-50 py-6 sm:py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+        <div className="text-center mb-6 sm:mb-8">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
             <svg
-              className="w-8 h-8 text-white"
+              className="w-6 h-6 sm:w-8 sm:h-8 text-white"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -69,24 +69,24 @@ const Login = () => {
               />
             </svg>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Giriş Yap</h1>
-          <p className="text-gray-600">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Giriş Yap</h1>
+          <p className="text-sm sm:text-base text-gray-600">
             Hesabınıza giriş yapın ve hizmetlerden yararlanın
           </p>
         </div>
 
         {/* Simple Platform Information Section */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+        <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-6 sm:mb-8">
           <div className="text-center">
-            <h2 className="text-xl font-semibold text-gray-900 mb-3">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3">
               OTOMedik'a Hoş Geldiniz
             </h2>
-            <p className="text-gray-600 mb-4">
+            <p className="text-sm sm:text-base text-gray-600 mb-4">
               OTOMedik'da arabanızı tamir ettirebileceğiniz işletmelere
               ulaşabilceksiniz. Türkiye'nin en güvenilir ve profesyonel otomotiv
               hizmet platformunda binlerce işletme ile tanışın
             </p>
-            <div className="flex justify-center space-x-6 text-sm text-gray-500">
+            <div className="flex flex-col sm:flex-row justify-center space-y-2 sm:space-y-0 sm:space-x-6 text-xs sm:text-sm text-gray-500">
               <div className="flex items-center space-x-2">
                 <svg
                   className="w-5 h-5 text-green-500"

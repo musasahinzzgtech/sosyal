@@ -65,6 +65,7 @@ const Messages = () => {
   const [loading, setLoading] = useState(true);
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [showChatList, setShowChatList] = useState(true); // Mobile chat list toggle
 
   const [typingUsers, setTypingUsers] = useState(new Set());
   const [sendingMessage, setSendingMessage] = useState(false);
@@ -109,7 +110,6 @@ const Messages = () => {
         setSendingMessage(true);
 
         // Import services dynamically
-        const apiService = (await import("../services/api")).default;
         const socketService = (await import("../services/socket")).default;
 
         // Create optimistic message for immediate UI update
@@ -137,7 +137,7 @@ const Messages = () => {
         // Get the receiver ID from the selected chat participants
         const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
         const receiver = selectedChat.participants.find(
-          (p) => (typeof p === "string" ? p : p._id) !== currentUser._id
+          (p) => (typeof p === "string" ? p : p._id) !== currentUser.id
         );
         const receiverId =
           typeof receiver === "string" ? receiver : receiver._id;
@@ -146,7 +146,6 @@ const Messages = () => {
         socketService.sendMessage(receiverId, messageText.trim());
         console.log("receiverId", receiverId, receiver, selectedChat);
         // Also send via REST API for persistence
-   
       } catch (error) {
         console.error("Failed to send message:", error);
 
@@ -410,11 +409,12 @@ const Messages = () => {
       setMessagesLoading(false);
     }
   };
-
+  console.log("selectedChat", selectedChat);
   const handleChatSelect = async (chat) => {
     setSelectedChat(chat);
     setMessages([]); // Clear previous messages
     setTypingUsers(new Set()); // Clear typing indicators
+    setShowChatList(false); // Hide chat list on mobile when chat is selected
 
     await loadMessages(chat.id);
 
@@ -563,7 +563,11 @@ const Messages = () => {
       }
 
       // Reload conversations to update last message and time
-      loadConversations();
+      if (selectedChat) {
+        loadMessages(selectedChat.id);
+      } else {
+        loadConversations();
+      }
     });
 
     // Listen for message status updates
@@ -624,6 +628,19 @@ const Messages = () => {
     });
   }, [selectedChat, user]);
 
+  const cleanup = async () => {
+    const socketService = (await import("../services/socket")).default;
+    socketService.offMessage("message:receive");
+    socketService.offMessage("message:delivered");
+    socketService.offMessage("message:read");
+    socketService.offTyping("typing:start");
+    socketService.offTyping("typing:stop");
+    socketService.offOnlineStatus("user:online");
+    socketService.offOnlineStatus("user:offline");
+
+    // Disconnect socket when component unmounts
+    socketService.disconnect();
+  };
   // Load conversations and set up WebSocket listeners
   useEffect(() => {
     loadConversations();
@@ -631,19 +648,6 @@ const Messages = () => {
 
     // Cleanup function
     return () => {
-      const cleanup = async () => {
-        const socketService = (await import("../services/socket")).default;
-        socketService.offMessage("message:receive");
-        socketService.offMessage("message:delivered");
-        socketService.offMessage("message:read");
-        socketService.offTyping("typing:start");
-        socketService.offTyping("typing:stop");
-        socketService.offOnlineStatus("user:online");
-        socketService.offOnlineStatus("user:offline");
-
-        // Disconnect socket when component unmounts
-        socketService.disconnect();
-      };
       cleanup();
     };
   }, [setupWebSocket]);
@@ -838,18 +842,20 @@ const Messages = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+      <div className="bg-white shadow-sm border-b border-gray-200 px-4 sm:px-6 py-4">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Mesajlar</h1>
-              <p className="text-gray-600">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+                Mesajlar
+              </h1>
+              <p className="text-sm sm:text-base text-gray-600">
                 Hizmet sağlayıcılar ile iletişime geçin
               </p>
             </div>
             <button
               onClick={() => setShowNewChatModal(true)}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200"
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200 text-sm sm:text-base font-medium"
             >
               Yeni Sohbet
             </button>
@@ -859,8 +865,8 @@ const Messages = () => {
 
       {/* New Chat Modal */}
       {showNewChatModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-4 sm:p-6 max-w-md w-full mx-4">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
               {newChatUser ? "Yeni Sohbet Başlat" : "Kullanıcı Ara"}
             </h3>
@@ -923,11 +929,15 @@ const Messages = () => {
       )}
 
       {/* Chat Container */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-          <div className="flex h-[600px]">
+          <div className="flex flex-col lg:flex-row h-[calc(100vh-200px)] sm:h-[600px]">
             {/* Left Sidebar - Chat List */}
-            <div className="w-80 border-r border-gray-200 bg-gray-50">
+            <div
+              className={`w-full lg:w-80 border-b lg:border-b-0 lg:border-r border-gray-200 bg-gray-50 flex-shrink-0 ${
+                !showChatList && selectedChat ? "hidden lg:block" : ""
+              }`}
+            >
               {/* Search */}
               <div className="p-4 border-b border-gray-200 bg-white">
                 <div className="relative">
@@ -960,10 +970,10 @@ const Messages = () => {
                   // Show skeleton loaders while loading
                   [...Array(6)].map((_, i) => <ChatSkeleton key={i} />)
                 ) : chats.length === 0 ? (
-                  <div className="p-8 text-center">
-                    <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <div className="p-4 sm:p-8 text-center">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
                       <svg
-                        className="w-8 h-8 text-gray-400"
+                        className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -976,10 +986,10 @@ const Messages = () => {
                         />
                       </svg>
                     </div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">
                       Henüz Sohbet Yok
                     </h3>
-                    <p className="text-gray-500">
+                    <p className="text-sm sm:text-base text-gray-500">
                       Hizmet sağlayıcılar ile iletişime geçmek için önce bir
                       hizmet sağlayıcı bulun
                     </p>
@@ -989,22 +999,22 @@ const Messages = () => {
                     <div
                       key={chat.id}
                       onClick={() => handleChatSelect(chat)}
-                      className={`p-4 cursor-pointer transition-all duration-200 hover:bg-gray-100 ${
+                      className={`p-3 sm:p-4 cursor-pointer transition-all duration-200 hover:bg-gray-100 ${
                         selectedChat?.id === chat.id
                           ? "bg-blue-50 border-r-2 border-blue-500"
                           : ""
                       }`}
                     >
-                      <div className="flex items-center space-x-3">
+                      <div className="flex items-center space-x-2 sm:space-x-3">
                         {/* Avatar */}
                         <div className="relative">
                           <img
                             src={`http://localhost:3001${chat.avatar}`}
                             alt={chat.name}
-                            className="w-12 h-12 rounded-full object-cover"
+                            className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover"
                           />
                           {chat.online && (
-                            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
+                            <div className="absolute -bottom-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 bg-green-500 border-2 border-white rounded-full"></div>
                           )}
                         </div>
 
@@ -1018,14 +1028,14 @@ const Messages = () => {
                               {chat.time}
                             </span>
                           </div>
-                          <p className="text-sm text-gray-600 truncate mt-1">
+                          <p className="text-xs sm:text-sm text-gray-600 truncate mt-1">
                             {chat.lastMessage}
                           </p>
                         </div>
 
                         {/* Unread Badge */}
                         {chat.unread > 0 && (
-                          <div className="bg-blue-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
+                          <div className="bg-blue-500 text-white text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center font-medium">
                             {chat.unread}
                           </div>
                         )}
@@ -1041,22 +1051,42 @@ const Messages = () => {
               {selectedChat ? (
                 <>
                   {/* Chat Header */}
-                  <div className="p-4 border-b border-gray-200 bg-white">
-                    <div className="flex items-center space-x-3">
+                  <div className="p-3 sm:p-4 border-b border-gray-200 bg-white">
+                    <div className="flex items-center space-x-2 sm:space-x-3">
+                      {/* Mobile back button */}
+                      <button
+                        onClick={() => setShowChatList(true)}
+                        className="lg:hidden p-1 text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+                      >
+                        <svg
+                          className="w-6 h-6"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15 19l-7-7 7-7"
+                          />
+                        </svg>
+                      </button>
+
                       <img
                         src={`http://localhost:3001${selectedChat.avatar}`}
                         alt={selectedChat.name}
-                        className="w-10 h-10 rounded-full object-cover"
+                        className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover"
                       />
-                      <div>
-                        <h3 className="font-semibold text-gray-900">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm sm:text-base font-semibold text-gray-900 truncate">
                           {selectedChat.name}
                         </h3>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-xs sm:text-sm text-gray-500">
                           {selectedChat.online ? "Çevrimiçi" : "Çevrimdışı"}
                         </p>
                       </div>
-                      <div className="ml-auto flex items-center space-x-2">
+                      <div className="flex items-center space-x-1 sm:space-x-2">
                         <button className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors duration-200">
                           <svg
                             className="w-5 h-5"
@@ -1107,7 +1137,7 @@ const Messages = () => {
                   </div>
 
                   {/* Messages */}
-                  <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+                  <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4 bg-gray-50">
                     {messagesLoading ? (
                       // Show skeleton loaders while loading messages
                       <div className="space-y-4">
@@ -1155,7 +1185,7 @@ const Messages = () => {
                             }}
                           >
                             <div
-                              className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl shadow-sm transition-all duration-200 hover:shadow-md ${
+                              className={`max-w-[280px] sm:max-w-xs lg:max-w-md px-3 py-2 sm:px-4 sm:py-3 rounded-2xl shadow-sm transition-all duration-200 hover:shadow-md ${
                                 message.sender === "me"
                                   ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white"
                                   : "bg-white text-gray-900 border border-gray-200 hover:border-gray-300"
@@ -1194,8 +1224,8 @@ const Messages = () => {
                   </div>
 
                   {/* Message Input */}
-                  <div className="p-4 border-t border-gray-200 bg-white">
-                    <div className="flex items-center space-x-3">
+                  <div className="p-3 sm:p-4 border-t border-gray-200 bg-white">
+                    <div className="flex items-center space-x-2 sm:space-x-3">
                       <button className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors duration-200">
                         <svg
                           className="w-5 h-5"
@@ -1271,10 +1301,10 @@ const Messages = () => {
               ) : (
                 /* Empty State */
                 <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
-                  <div className="text-center max-w-md mx-auto px-6">
-                    <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                  <div className="text-center max-w-md mx-auto px-4 sm:px-6">
+                    <div className="w-16 h-16 sm:w-24 sm:h-24 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-lg">
                       <svg
-                        className="w-12 h-12 text-blue-500"
+                        className="w-8 h-8 sm:w-12 sm:h-12 text-blue-500"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -1287,16 +1317,16 @@ const Messages = () => {
                         />
                       </svg>
                     </div>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                    <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3">
                       Sohbet Seçin
                     </h3>
-                    <p className="text-gray-600 mb-6 leading-relaxed">
+                    <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 leading-relaxed">
                       Mesajlaşmak istediğiniz kişiyi sol taraftan seçin veya
                       yeni bir sohbet başlatın
                     </p>
                     <button
                       onClick={() => setShowNewChatModal(true)}
-                      className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-medium shadow-md hover:shadow-lg transform hover:scale-105"
+                      className="px-4 py-2 sm:px-6 sm:py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-medium shadow-md hover:shadow-lg transform hover:scale-105 text-sm sm:text-base"
                     >
                       Yeni Sohbet Başlat
                     </button>

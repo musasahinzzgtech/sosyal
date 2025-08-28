@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { cities } from "../constants";
+import { cities, sectors } from "../constants";
 
 const Cekici = () => {
   const navigate = useNavigate();
@@ -275,8 +275,8 @@ const Cekici = () => {
               {filteredBusinesses.length} İşletme Bulundu
             </h2>
             <p className="text-gray-600">
-              {selectedCity && `📍 ${selectedCity}`}{" "}
-              {selectedSector && `• 🏭 ${selectedSector}`}
+              {selectedCity && `📍 ${cities.find((city) => city.value === selectedCity)?.label}`}{" "}
+              {selectedSector && `• 🏭 ${sectors.find((sector) => sector.value === selectedSector)?.label}`}
             </p>
           </div>
           {isLoading && (
