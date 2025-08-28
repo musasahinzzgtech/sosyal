@@ -319,6 +319,42 @@ class ApiService {
       });
     }
   }
+
+  // Review methods
+  async createReview(businessId, rating, comment) {
+    return this.request("/reviews", {
+      method: "POST",
+      body: JSON.stringify({
+        businessId,
+        rating,
+        comment,
+      }),
+    });
+  }
+
+  async getBusinessReviews(businessId, page = 1, limit = 10) {
+    return this.request(`/reviews/business/${businessId}?page=${page}&limit=${limit}`);
+  }
+
+  async getUserReview(businessId) {
+    return this.request(`/reviews/user/${businessId}`);
+  }
+
+  async updateReview(reviewId, rating, comment) {
+    return this.request(`/reviews/${reviewId}`, {
+      method: "PUT",
+      body: JSON.stringify({
+        rating,
+        comment,
+      }),
+    });
+  }
+
+  async deleteReview(reviewId) {
+    return this.request(`/reviews/${reviewId}`, {
+      method: "DELETE",
+    });
+  }
 }
 
 export default new ApiService();

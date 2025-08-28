@@ -12,7 +12,18 @@ const IsletmeProfili = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("general");
-
+  const [reviews, setReviews] = useState([]);
+  const [userReview, setUserReview] = useState(null);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewForm, setReviewForm] = useState({ rating: 5, comment: "" });
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [reviewsPage, setReviewsPage] = useState(1);
+  const [reviewsPagination, setReviewsPagination] = useState({});
+  const [cities] = useState([
+    { label: "İzmir", value: "izmir" },
+    { label: "Adana", value: "adana" },
+    { label: "Denizli", value: "denizli" },
+  ]);
   useEffect(() => {
     const fetchBusiness = async () => {
       try {
@@ -32,6 +43,29 @@ const IsletmeProfili = () => {
     }
   }, [id]);
 
+  useEffect(() => {
+    const fetchReviews = async () => {
+      if (!id || !user) return;
+
+      try {
+        const [reviewsData, userReviewData] = await Promise.all([
+          api.getBusinessReviews(id, reviewsPage, 10),
+          api.getUserReview(id),
+        ]);
+
+        setReviews(reviewsData.reviews || []);
+        setReviewsPagination(reviewsData.pagination || {});
+        setUserReview(
+          Object.keys(userReviewData).length > 0 ? userReviewData : null
+        );
+      } catch (err) {
+        console.error("Error fetching reviews:", err);
+      }
+    };
+
+    fetchReviews();
+  }, [id, user, reviewsPage]);
+  console.log("userReviewData", userReview);
   const handleCall = (phone) => {
     if (phone) {
       window.open(`tel:${phone}`, "_self");
@@ -44,6 +78,93 @@ const IsletmeProfili = () => {
     } else {
       navigate("/giris-yap");
     }
+  };
+
+  const handleSubmitReview = async () => {
+    if (!user) {
+      navigate("/giris-yap");
+      return;
+    }
+
+    if (!reviewForm.comment.trim() || reviewForm.comment.length < 10) {
+      alert("Yorum en az 10 karakter olmalıdır");
+      return;
+    }
+
+    setIsSubmittingReview(true);
+    try {
+      if (userReview) {
+        // Update existing review
+        await api.updateReview(
+          userReview._id,
+          reviewForm.rating,
+          reviewForm.comment
+        );
+      } else {
+        // Create new review
+        await api.createReview(id, reviewForm.rating, reviewForm.comment);
+      }
+
+      // Refresh reviews
+      const [reviewsData, userReviewData] = await Promise.all([
+        api.getBusinessReviews(id, reviewsPage, 10),
+        api.getUserReview(id),
+      ]);
+
+      setReviews(reviewsData.reviews || []);
+      setReviewsPagination(reviewsData.pagination || {});
+      setUserReview(userReviewData);
+      setShowReviewForm(false);
+      setReviewForm({ rating: 5, comment: "" });
+
+      // Refresh business data to update rating
+      const updatedBusiness = await api.getUser(id);
+      setBusiness(updatedBusiness);
+    } catch (err) {
+      console.error("Error submitting review:", err);
+      alert("Değerlendirme gönderilirken hata oluştu");
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
+
+  const handleDeleteReview = async () => {
+    if (!userReview) return;
+
+    if (!confirm("Değerlendirmenizi silmek istediğinizden emin misiniz?")) {
+      return;
+    }
+
+    try {
+      await api.deleteReview(userReview._id);
+
+      // Refresh reviews
+      const [reviewsData, userReviewData] = await Promise.all([
+        api.getBusinessReviews(id, reviewsPage, 10),
+        api.getUserReview(id),
+      ]);
+
+      setReviews(reviewsData.reviews || []);
+      setReviewsPagination(reviewsData.pagination || {});
+      setUserReview(userReviewData);
+
+      // Refresh business data to update rating
+      const updatedBusiness = await api.getUser(id);
+      setBusiness(updatedBusiness);
+    } catch (err) {
+      console.error("Error deleting review:", err);
+      alert("Değerlendirme silinirken hata oluştu");
+    }
+  };
+
+  const handleEditReview = () => {
+    if (userReview) {
+      setReviewForm({
+        rating: userReview.rating,
+        comment: userReview.comment,
+      });
+    }
+    setShowReviewForm(true);
   };
 
   const getSectorIcon = (sector) => {
@@ -74,25 +195,43 @@ const IsletmeProfili = () => {
 
   if (loading) {
     return (
-      <Layout>
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">İşletme bilgileri yükleniyor...</p>
-          </div>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">İşletme bilgileri yükleniyor...</p>
         </div>
-      </Layout>
+      </div>
     );
   }
 
   if (error || !business) {
     return (
-      <Layout>
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-          <div className="text-center bg-white p-8 rounded-2xl shadow-xl">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center bg-white p-8 rounded-2xl shadow-xl">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg
+              className="w-8 h-8 text-red-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Hata</h3>
+          <p className="text-gray-500 mb-4">{error || "İşletme bulunamadı"}</p>
+          <button
+            onClick={() => navigate("/")}
+            className="group relative overflow-hidden px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 transform hover:scale-105 hover:shadow-lg font-medium"
+          >
+            <div className="flex items-center gap-2">
               <svg
-                className="w-8 h-8 text-red-500"
+                className="w-5 h-5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -101,41 +240,17 @@ const IsletmeProfili = () => {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
                 />
               </svg>
+              <span>Ana Sayfaya Dön</span>
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Hata</h3>
-            <p className="text-gray-500 mb-4">
-              {error || "İşletme bulunamadı"}
-            </p>
-            <button
-              onClick={() => navigate("/")}
-              className="group relative overflow-hidden px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 transform hover:scale-105 hover:shadow-lg font-medium"
-            >
-              <div className="flex items-center gap-2">
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M10 19l-7-7m0 0l7-7m-7 7h18"
-                  />
-                </svg>
-                <span>Ana Sayfaya Dön</span>
-              </div>
-            </button>
-          </div>
+          </button>
         </div>
-      </Layout>
+      </div>
     );
   }
-
+  console.log("reviews", reviews);
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8">
       <div className="max-w-4xl mx-auto px-4">
@@ -225,7 +340,9 @@ const IsletmeProfili = () => {
                       d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                     />
                   </svg>
-                  <span>{business.city}</span>
+                  <span>
+                    {cities.find((city) => city.value === business.city)?.label}
+                  </span>
                 </div>
 
                 {business.rating > 0 && (
@@ -365,6 +482,31 @@ const IsletmeProfili = () => {
                     />
                   </svg>
                   Adres Bilgileri
+                </div>
+              </button>
+              <button
+                onClick={() => setActiveTab("reviews")}
+                className={`flex-1 px-6 py-4 text-sm font-medium transition-colors duration-200 ${
+                  activeTab === "reviews"
+                    ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50"
+                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                    />
+                  </svg>
+                  Değerlendirmeler ({business?.reviewCount || 0})
                 </div>
               </button>
             </nav>
@@ -641,6 +783,267 @@ const IsletmeProfili = () => {
                       <p>Harita görünümü yakında eklenecek</p>
                     </div>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "reviews" && (
+              <div className="space-y-6">
+                {/* Review Form */}
+                {user && user.userType === "musteri" && (
+                  <div className="bg-gray-50 rounded-lg p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                      {userReview
+                        ? "Değerlendirmenizi Düzenleyin"
+                        : "Değerlendirme Yapın"}
+                    </h3>
+
+                    {!showReviewForm && !userReview && (
+                      <button
+                        onClick={() => setShowReviewForm(true)}
+                        className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 font-medium"
+                      >
+                        Değerlendirme Yap
+                      </button>
+                    )}
+
+                    {!showReviewForm && userReview && (
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center">
+                            {[...Array(5)].map((_, i) => (
+                              <svg
+                                key={i}
+                                className={`w-5 h-5 ${
+                                  i < userReview.rating
+                                    ? "text-yellow-400"
+                                    : "text-gray-300"
+                                }`}
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                              </svg>
+                            ))}
+                          </div>
+                          <span className="text-sm text-gray-600">
+                            {userReview.rating}/5
+                          </span>
+                        </div>
+                        <p className="text-gray-700">{userReview.comment}</p>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={handleEditReview}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                          >
+                            Düzenle
+                          </button>
+                          <button
+                            onClick={handleDeleteReview}
+                            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                          >
+                            Sil
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {showReviewForm && (
+                      <div className="space-y-4">
+                        {/* Rating */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Puanınız
+                          </label>
+                          <div className="flex items-center gap-2">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <button
+                                key={star}
+                                type="button"
+                                onClick={() =>
+                                  setReviewForm({ ...reviewForm, rating: star })
+                                }
+                                className="focus:outline-none"
+                              >
+                                <svg
+                                  className={`w-8 h-8 ${
+                                    star <= reviewForm.rating
+                                      ? "text-yellow-400"
+                                      : "text-gray-300"
+                                  }`}
+                                  fill="currentColor"
+                                  viewBox="0 0 20 20"
+                                >
+                                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                </svg>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Comment */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Yorumunuz
+                          </label>
+                          <textarea
+                            value={reviewForm.comment}
+                            onChange={(e) =>
+                              setReviewForm({
+                                ...reviewForm,
+                                comment: e.target.value,
+                              })
+                            }
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                            rows={4}
+                            placeholder="Deneyiminizi paylaşın (en az 10 karakter)"
+                            maxLength={500}
+                          />
+                          <div className="text-sm text-gray-500 mt-1">
+                            {reviewForm.comment.length}/500 karakter
+                          </div>
+                        </div>
+
+                        {/* Buttons */}
+                        <div className="flex gap-3">
+                          <button
+                            onClick={handleSubmitReview}
+                            disabled={
+                              isSubmittingReview ||
+                              reviewForm.comment.length < 10
+                            }
+                            className="px-6 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {isSubmittingReview ? "Gönderiliyor..." : "Gönder"}
+                          </button>
+                          <button
+                            onClick={() => {
+                              setShowReviewForm(false);
+                              setReviewForm({ rating: 5, comment: "" });
+                            }}
+                            className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                          >
+                            İptal
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Reviews List */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    Müşteri Değerlendirmeleri
+                  </h3>
+
+                  {reviews.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <svg
+                        className="w-16 h-16 mx-auto mb-4 text-gray-300"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                        />
+                      </svg>
+                      <p>Henüz değerlendirme yapılmamış</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {reviews.map((review) => (
+                        <div
+                          key={review._id}
+                          className="bg-white border border-gray-200 rounded-lg p-4"
+                        >
+                          <div className="flex items-start gap-3">
+                            {/* Reviewer Avatar */}
+                            <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
+                              {review?.reviewerId?.photos &&
+                              review.reviewerId.photos.length > 0 ? (
+                                <img
+                                  src={`http://localhost:3001${review.reviewerId.photos[0]}`}
+                                  alt={`${review.reviewerId.firstName} ${review.reviewerId.lastName}`}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-sm font-bold">
+                                  {review.reviewerId.firstName?.charAt(0)}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Review Content */}
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <h4 className="font-medium text-gray-900">
+                                  {review.reviewerId.firstName}{" "}
+                                  {review.reviewerId.lastName}
+                                </h4>
+                                <div className="flex items-center">
+                                  {[...Array(5)].map((_, i) => (
+                                    <svg
+                                      key={i}
+                                      className={`w-4 h-4 ${
+                                        i < review.rating
+                                          ? "text-yellow-400"
+                                          : "text-gray-300"
+                                      }`}
+                                      fill="currentColor"
+                                      viewBox="0 0 20 20"
+                                    >
+                                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                    </svg>
+                                  ))}
+                                </div>
+                                <span className="text-sm text-gray-500">
+                                  {formatDate(review.createdAt)}
+                                </span>
+                              </div>
+                              <p className="text-gray-700">{review.comment}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* Pagination */}
+                      {reviewsPagination.pages > 1 && (
+                        <div className="flex justify-center gap-2 mt-6">
+                          <button
+                            onClick={() =>
+                              setReviewsPage(Math.max(1, reviewsPage - 1))
+                            }
+                            disabled={reviewsPage === 1}
+                            className="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            Önceki
+                          </button>
+                          <span className="px-3 py-2 text-gray-700">
+                            Sayfa {reviewsPage} / {reviewsPagination.pages}
+                          </span>
+                          <button
+                            onClick={() =>
+                              setReviewsPage(
+                                Math.min(
+                                  reviewsPagination.pages,
+                                  reviewsPage + 1
+                                )
+                              )
+                            }
+                            disabled={reviewsPage === reviewsPagination.pages}
+                            className="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            Sonraki
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             )}

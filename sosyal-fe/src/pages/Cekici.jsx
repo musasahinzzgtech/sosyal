@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 
 const Cekici = () => {
   const navigate = useNavigate();
@@ -127,27 +128,17 @@ const Cekici = () => {
     });
   };
 
-  const handleCallBusiness = (phone) => {
-    if (phone) {
-      window.open(`tel:${phone}`, "_self");
-    }
-  };
-
+  const { user } = useAuth();
   const handleViewProfile = (business) => {
+    if (business.id === user?.id) {
+      navigate("/profilim");
+    } else {
+      navigate(`/isletme/${business.id}`);
+    }
     // Navigate to business profile page (you can implement this later)
     console.log("View profile for:", business.name);
     // TODO: Implement navigation to business profile page
     // navigate(`/business/${business.id}`);
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    return date.toLocaleDateString("tr-TR", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
   };
 
   const getSectorIcon = (sector) => {
@@ -471,7 +462,7 @@ const Cekici = () => {
                         </h3>
                       </div>
                       <p className="text-sm text-gray-600 mb-2">
-                        📍 {business.city}
+                        📍 {cities.find((city) => city.value === business.city)?.label}
                       </p>
                     </div>
                   </div>

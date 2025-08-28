@@ -20,6 +20,7 @@ const Home = () => {
     { label: "Kaporta", value: "kaporta" },
     { label: "Boyama", value: "boyama" },
     { label: "Çekici", value: "cekici" },
+    { label: "Ekspertiz", value: "ekspertiz" },
   ]);
   const [error, setError] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState({});
@@ -320,7 +321,10 @@ const Home = () => {
               {filteredBusinesses.length} İşletme Bulundu
             </h2>
             <p className="text-gray-600">
-              {selectedCity && `📍 ${selectedCity}`}{" "}
+              {selectedCity &&
+                `📍 ${
+                  cities.find((city) => city.value === selectedCity)?.label
+                }`}
               {selectedSector && `• 🏭 ${selectedSector}`}
             </p>
           </div>

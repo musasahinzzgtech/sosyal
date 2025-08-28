@@ -16,6 +16,7 @@ const auth_module_1 = require("./auth/auth.module");
 const users_module_1 = require("./users/users.module");
 const messages_module_1 = require("./messages/messages.module");
 const chat_module_1 = require("./chat/chat.module");
+const reviews_module_1 = require("./reviews/reviews.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -31,6 +32,7 @@ exports.AppModule = AppModule = __decorate([
             users_module_1.UsersModule,
             messages_module_1.MessagesModule,
             chat_module_1.ChatModule,
+            reviews_module_1.ReviewsModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],
