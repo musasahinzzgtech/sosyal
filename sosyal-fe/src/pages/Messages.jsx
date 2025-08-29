@@ -1347,12 +1347,7 @@ const Messages = () => {
                       Mesajlaşmak istediğiniz kişiyi sol taraftan seçin veya
                       yeni bir sohbet başlatın
                     </p>
-                    <button
-                      onClick={() => setShowNewChatModal(true)}
-                      className="px-4 py-2 sm:px-6 sm:py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-medium shadow-md hover:shadow-lg transform hover:scale-105 text-sm sm:text-base"
-                    >
-                      Yeni Sohbet Başlat
-                    </button>
+        
                   </div>
                 </div>
               )}

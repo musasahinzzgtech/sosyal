@@ -5,6 +5,9 @@ import api from "../services/api";
 import Layout from "../components/Layout";
 import { cities } from "../constants";
 
+// Google Maps API Key - Replace with your actual API key
+const GOOGLE_MAPS_API_KEY = "AIzaSyCTvXx2qxlKEHARt68erbxKviGoBq3F7Nk";
+
 const IsletmeProfili = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -20,6 +23,28 @@ const IsletmeProfili = () => {
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [reviewsPage, setReviewsPage] = useState(1);
   const [reviewsPagination, setReviewsPagination] = useState({});
+  const [map, setMap] = useState(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
+
+  // Load Google Maps API
+  useEffect(() => {
+    if (!window.google) {
+      const script = document.createElement("script");
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`;
+      script.async = true;
+      script.defer = true;
+      script.onload = () => {
+        console.log("Google Maps API loaded");
+        setMapLoaded(true);
+      };
+      script.onerror = () => {
+        console.error("Failed to load Google Maps API");
+      };
+      document.head.appendChild(script);
+    } else {
+      setMapLoaded(true);
+    }
+  }, []);
 
   useEffect(() => {
     const fetchBusiness = async () => {
@@ -39,6 +64,96 @@ const IsletmeProfili = () => {
       fetchBusiness();
     }
   }, [id]);
+
+  // Initialize map when business data and Google Maps API are loaded
+  useEffect(() => {
+    if (mapLoaded && business && business.businessLatitude && business.businessLongitude && !map) {
+      const initializeMap = () => {
+        const mapElement = document.getElementById("businessMap");
+        if (!mapElement) {
+          console.log("Map element not found, retrying...");
+          // Retry after a short delay
+          setTimeout(initializeMap, 100);
+          return;
+        }
+
+        const businessLocation = {
+          lat: business.businessLatitude,
+          lng: business.businessLongitude
+        };
+
+        try {
+          console.log("Initializing map with location:", businessLocation);
+          const mapInstance = new window.google.maps.Map(
+            mapElement,
+            {
+              center: businessLocation,
+              zoom: 15,
+              mapTypeControl: false,
+              streetViewControl: false,
+              fullscreenControl: true,
+              zoomControl: true,
+              styles: [
+                {
+                  featureType: "poi",
+                  elementType: "labels",
+                  stylers: [{ visibility: "off" }]
+                }
+              ]
+            }
+          );
+
+          // Add marker for business location
+          new window.google.maps.Marker({
+            position: businessLocation,
+            map: mapInstance,
+            title: business.businessName || `${business.firstName} ${business.lastName}`,
+            icon: {
+              url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="16" cy="16" r="16" fill="#3B82F6" fill-opacity="0.2"/>
+                  <circle cx="16" cy="16" r="8" fill="#3B82F6"/>
+                  <circle cx="16" cy="16" r="4" fill="white"/>
+                </svg>
+              `),
+              scaledSize: new window.google.maps.Size(32, 32),
+              anchor: new window.google.maps.Point(16, 16)
+            }
+          });
+
+          console.log("Map initialized successfully");
+          setMap(mapInstance);
+        } catch (error) {
+          console.error("Error initializing map:", error);
+        }
+      };
+
+      // Start initialization
+      initializeMap();
+    }
+  }, [mapLoaded, business, map]);
+
+  // Reset map when switching to address tab
+  useEffect(() => {
+    if (activeTab === "address" && mapLoaded && business && business.businessLatitude && business.businessLongitude && !map) {
+      // Small delay to ensure the DOM is ready
+      const timer = setTimeout(() => {
+        setMap(null); // Reset map state to trigger re-initialization
+      }, 200);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [activeTab, mapLoaded, business, map]);
+
+  // Cleanup map when component unmounts
+  useEffect(() => {
+    return () => {
+      if (map) {
+        // Clean up any event listeners or markers if needed
+        setMap(null);
+      }
+    };
+  }, [map]);
 
   useEffect(() => {
     const fetchReviews = async () => {
@@ -757,29 +872,97 @@ const IsletmeProfili = () => {
                   </div>
                 </div>
 
-                {/* Map Placeholder */}
+                {/* Google Maps Display */}
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">
                     Konum
                   </h3>
-                  <div className="bg-gray-100 rounded-lg h-64 flex items-center justify-center">
-                    <div className="text-center text-gray-500">
-                      <svg
-                        className="w-16 h-16 mx-auto mb-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3"
-                        />
-                      </svg>
-                      <p>Harita görünümü yakında eklenecek</p>
+                  
+                  {business.businessLatitude && business.businessLongitude ? (
+                    <div className="space-y-3">
+                      {/* Map Container */}
+                      <div className="relative">
+                        <div 
+                          id="businessMap" 
+                          className="w-full h-64 rounded-lg border border-gray-200 shadow-sm"
+                        ></div>
+                        
+                                                 {/* Map Loading Overlay */}
+                         {!map && (
+                           <div className="absolute inset-0 bg-gray-100 rounded-lg flex items-center justify-center">
+                             <div className="text-center">
+                               <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                               <p className="text-sm text-gray-600">
+                                 {mapLoaded ? "Harita yükleniyor..." : "Google Maps yükleniyor..."}
+                               </p>
+                               {!mapLoaded && (
+                                 <p className="text-xs text-gray-500 mt-1">Lütfen bekleyin...</p>
+                               )}
+                             </div>
+                           </div>
+                         )}
+                      </div>
+
+                      {/* Coordinates Display */}
+                      <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <p className="text-sm font-medium text-blue-800 mb-1">Konum Koordinatları:</p>
+                        <p className="text-xs text-blue-600">
+                          Enlem: {business.businessLatitude.toFixed(6)}, Boylam: {business.businessLongitude.toFixed(6)}
+                        </p>
+                      </div>
+
+                                             {/* Map Instructions */}
+                       <div className="text-center">
+                         <p className="text-sm text-gray-600">
+                           💡 Haritada işaretçi ile gösterilen konum işletmenizin bulunduğu yerdir
+                         </p>
+                       </div>
+
+                       {/* Go to Location Button */}
+                       <div className="text-center">
+                         <a
+                           href={`https://www.google.com/maps?q=${business.businessLatitude},${business.businessLongitude}`}
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 transition-all duration-300 transform hover:scale-105 hover:shadow-lg font-medium"
+                         >
+                           <svg
+                             className="w-5 h-5"
+                             fill="none"
+                             stroke="currentColor"
+                             viewBox="0 0 24 24"
+                           >
+                             <path
+                               strokeLinecap="round"
+                               strokeLinejoin="round"
+                               strokeWidth={2}
+                               d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                             />
+                           </svg>
+                           <span>Konuma Git</span>
+                         </a>
+                       </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="bg-gray-100 rounded-lg h-64 flex items-center justify-center">
+                      <div className="text-center text-gray-500">
+                        <svg
+                          className="w-16 h-16 mx-auto mb-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3"
+                          />
+                        </svg>
+                        <p>Konum bilgisi bulunamadı</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
