@@ -67,7 +67,13 @@ const IsletmeProfili = () => {
 
   // Initialize map when business data and Google Maps API are loaded
   useEffect(() => {
-    if (mapLoaded && business && business.businessLatitude && business.businessLongitude && !map) {
+    if (
+      mapLoaded &&
+      business &&
+      business.businessLatitude &&
+      business.businessLongitude &&
+      !map
+    ) {
       const initializeMap = () => {
         const mapElement = document.getElementById("businessMap");
         if (!mapElement) {
@@ -79,37 +85,38 @@ const IsletmeProfili = () => {
 
         const businessLocation = {
           lat: business.businessLatitude,
-          lng: business.businessLongitude
+          lng: business.businessLongitude,
         };
 
         try {
           console.log("Initializing map with location:", businessLocation);
-          const mapInstance = new window.google.maps.Map(
-            mapElement,
-            {
-              center: businessLocation,
-              zoom: 15,
-              mapTypeControl: false,
-              streetViewControl: false,
-              fullscreenControl: true,
-              zoomControl: true,
-              styles: [
-                {
-                  featureType: "poi",
-                  elementType: "labels",
-                  stylers: [{ visibility: "off" }]
-                }
-              ]
-            }
-          );
+          const mapInstance = new window.google.maps.Map(mapElement, {
+            center: businessLocation,
+            zoom: 15,
+            mapTypeControl: false,
+            streetViewControl: false,
+            fullscreenControl: true,
+            zoomControl: true,
+            styles: [
+              {
+                featureType: "poi",
+                elementType: "labels",
+                stylers: [{ visibility: "off" }],
+              },
+            ],
+          });
 
           // Add marker for business location
           new window.google.maps.Marker({
             position: businessLocation,
             map: mapInstance,
-            title: business.businessName || `${business.firstName} ${business.lastName}`,
+            title:
+              business.businessName ||
+              `${business.firstName} ${business.lastName}`,
             icon: {
-              url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`
+              url:
+                "data:image/svg+xml;charset=UTF-8," +
+                encodeURIComponent(`
                 <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <circle cx="16" cy="16" r="16" fill="#3B82F6" fill-opacity="0.2"/>
                   <circle cx="16" cy="16" r="8" fill="#3B82F6"/>
@@ -117,8 +124,8 @@ const IsletmeProfili = () => {
                 </svg>
               `),
               scaledSize: new window.google.maps.Size(32, 32),
-              anchor: new window.google.maps.Point(16, 16)
-            }
+              anchor: new window.google.maps.Point(16, 16),
+            },
           });
 
           console.log("Map initialized successfully");
@@ -135,12 +142,19 @@ const IsletmeProfili = () => {
 
   // Reset map when switching to address tab
   useEffect(() => {
-    if (activeTab === "address" && mapLoaded && business && business.businessLatitude && business.businessLongitude && !map) {
+    if (
+      activeTab === "address" &&
+      mapLoaded &&
+      business &&
+      business.businessLatitude &&
+      business.businessLongitude &&
+      !map
+    ) {
       // Small delay to ensure the DOM is ready
       const timer = setTimeout(() => {
         setMap(null); // Reset map state to trigger re-initialization
       }, 200);
-      
+
       return () => clearTimeout(timer);
     }
   }, [activeTab, mapLoaded, business, map]);
@@ -877,71 +891,79 @@ const IsletmeProfili = () => {
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">
                     Konum
                   </h3>
-                  
+
                   {business.businessLatitude && business.businessLongitude ? (
                     <div className="space-y-3">
                       {/* Map Container */}
                       <div className="relative">
-                        <div 
-                          id="businessMap" 
+                        <div
+                          id="businessMap"
                           className="w-full h-64 rounded-lg border border-gray-200 shadow-sm"
                         ></div>
-                        
-                                                 {/* Map Loading Overlay */}
-                         {!map && (
-                           <div className="absolute inset-0 bg-gray-100 rounded-lg flex items-center justify-center">
-                             <div className="text-center">
-                               <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-                               <p className="text-sm text-gray-600">
-                                 {mapLoaded ? "Harita yükleniyor..." : "Google Maps yükleniyor..."}
-                               </p>
-                               {!mapLoaded && (
-                                 <p className="text-xs text-gray-500 mt-1">Lütfen bekleyin...</p>
-                               )}
-                             </div>
-                           </div>
-                         )}
+
+                        {/* Map Loading Overlay */}
+                        {!map && (
+                          <div className="absolute inset-0 bg-gray-100 rounded-lg flex items-center justify-center">
+                            <div className="text-center">
+                              <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                              <p className="text-sm text-gray-600">
+                                {mapLoaded
+                                  ? "Harita yükleniyor..."
+                                  : "Google Maps yükleniyor..."}
+                              </p>
+                              {!mapLoaded && (
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Lütfen bekleyin...
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       {/* Coordinates Display */}
                       <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                        <p className="text-sm font-medium text-blue-800 mb-1">Konum Koordinatları:</p>
+                        <p className="text-sm font-medium text-blue-800 mb-1">
+                          Konum Koordinatları:
+                        </p>
                         <p className="text-xs text-blue-600">
-                          Enlem: {business.businessLatitude.toFixed(6)}, Boylam: {business.businessLongitude.toFixed(6)}
+                          Enlem: {business.businessLatitude.toFixed(6)}, Boylam:{" "}
+                          {business.businessLongitude.toFixed(6)}
                         </p>
                       </div>
 
-                                             {/* Map Instructions */}
-                       <div className="text-center">
-                         <p className="text-sm text-gray-600">
-                           💡 Haritada işaretçi ile gösterilen konum işletmenizin bulunduğu yerdir
-                         </p>
-                       </div>
+                      {/* Map Instructions */}
+                      <div className="text-center">
+                        <p className="text-sm text-gray-600">
+                          💡 Haritada işaretçi ile gösterilen konum işletmenizin
+                          bulunduğu yerdir
+                        </p>
+                      </div>
 
-                       {/* Go to Location Button */}
-                       <div className="text-center">
-                         <a
-                           href={`https://www.google.com/maps?q=${business.businessLatitude},${business.businessLongitude}`}
-                           target="_blank"
-                           rel="noopener noreferrer"
-                           className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 transition-all duration-300 transform hover:scale-105 hover:shadow-lg font-medium"
-                         >
-                           <svg
-                             className="w-5 h-5"
-                             fill="none"
-                             stroke="currentColor"
-                             viewBox="0 0 24 24"
-                           >
-                             <path
-                               strokeLinecap="round"
-                               strokeLinejoin="round"
-                               strokeWidth={2}
-                               d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                             />
-                           </svg>
-                           <span>Konuma Git</span>
-                         </a>
-                       </div>
+                      {/* Go to Location Button */}
+                      <div className="text-center">
+                        <a
+                          href={`https://www.google.com/maps?q=${business.businessLatitude},${business.businessLongitude}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 transition-all duration-300 transform hover:scale-105 hover:shadow-lg font-medium"
+                        >
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                            />
+                          </svg>
+                          <span>Konuma Git</span>
+                        </a>
+                      </div>
                     </div>
                   ) : (
                     <div className="bg-gray-100 rounded-lg h-64 flex items-center justify-center">
@@ -1132,7 +1154,19 @@ const IsletmeProfili = () => {
                           d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
                         />
                       </svg>
-                      <p>Henüz değerlendirme yapılmamış</p>
+                      <p>
+                        {!user
+                          ? "Değerlinderme yapmak için veya değerlendirmeleri görmek için giriş yapınız"
+                          : "Henüz değerlendirme yapılmamış"}
+                      </p>
+                      {!user && (
+                        <button
+                          onClick={() => navigate("/giris-yap")}
+                          className="mt-4 px-6 py-2 bg-gradient-to-r rounded-lg  transition-all duration-300 font-medium border border-gray-300 hover:bg-gray-100"
+                        >
+                          Giriş Yap
+                        </button>
+                      )}
                     </div>
                   ) : (
                     <div className="space-y-4">

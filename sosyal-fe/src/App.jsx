@@ -12,6 +12,7 @@ import Messages from "./pages/Messages";
 import MyProfile from "./pages/MyProfile";
 import Cekici from "./pages/Cekici";
 import IsletmeProfili from "./pages/IsletmeProfili";
+import YedekParca from "./pages/YedekParca";
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
               <Route path="mesajlar" element={<Messages />} />
               <Route path="profilim" element={<MyProfile />} />
               <Route path="cekici-hizmetleri" element={<Cekici />} />
+              <Route path="yedek-parca" element={<YedekParca />} />
               <Route path="isletme/:id" element={<IsletmeProfili />} />
             </Route>
           </Routes>
