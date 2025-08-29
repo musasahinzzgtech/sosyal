@@ -5,6 +5,7 @@ import { UsersService } from "../users/users.service";
 interface AuthenticatedSocket extends Socket {
     userId?: string;
     userEmail?: string;
+    lastPing?: number;
 }
 export declare class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private messagesService;
@@ -27,9 +28,11 @@ export declare class ChatGateway implements OnGatewayConnection, OnGatewayDiscon
     }, client: AuthenticatedSocket): Promise<void>;
     handleTypingStart(data: {
         receiverId: string;
+        conversationId?: string;
     }, client: AuthenticatedSocket): Promise<void>;
     handleTypingStop(data: {
         receiverId: string;
+        conversationId?: string;
     }, client: AuthenticatedSocket): Promise<void>;
     handleUserTyping(data: {
         receiverId: string;
@@ -38,5 +41,6 @@ export declare class ChatGateway implements OnGatewayConnection, OnGatewayDiscon
     private verifyToken;
     getOnlineUsers(): string[];
     isUserOnline(userId: string): boolean;
+    cleanupInactiveConnections(): void;
 }
 export {};

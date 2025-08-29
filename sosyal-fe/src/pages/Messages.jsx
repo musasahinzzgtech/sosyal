@@ -68,7 +68,6 @@ const Messages = () => {
   const [showChatList, setShowChatList] = useState(true); // Mobile chat list toggle
 
   const [typingUsers, setTypingUsers] = useState(new Set());
-  const [sendingMessage, setSendingMessage] = useState(false);
   const [messageStatus, setMessageStatus] = useState({});
   const [showNewChatModal, setShowNewChatModal] = useState(false);
   const [newChatUser, setNewChatUser] = useState(null);
@@ -76,6 +75,8 @@ const Messages = () => {
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const lastTypingTimeRef = useRef(0);
+  const socketServiceRef = useRef(null);
+  const cleanupFunctionsRef = useRef([]);
 
   // Check if we have a target user from navigation
   useEffect(() => {
@@ -104,94 +105,98 @@ const Messages = () => {
 
   // Enhanced message sending with real-time updates
   const sendMessage = async () => {
-    console.log("Sending message:", messageText, selectedChat, sendingMessage);
-    if (messageText.trim() && selectedChat && !sendingMessage) {
-      try {
-        setSendingMessage(true);
+    try {
+      // Create optimistic message for immediate UI update
+      const tempMessageId = `temp_${Date.now()}`;
+      const optimisticMessage = {
+        id: tempMessageId,
+        content: messageText.trim(),
+        sender: "me",
+        time: new Date().toLocaleTimeString("tr-TR", {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        status: "sending",
+        timestamp: new Date(),
+        isOptimistic: true,
+      };
 
-        // Import services dynamically
-        const socketService = (await import("../services/socket")).default;
+      // Add optimistic message to UI
+      setMessages((prev) => [...prev, optimisticMessage]);
+      setMessageText("");
 
-        // Create optimistic message for immediate UI update
-        const tempMessageId = `temp_${Date.now()}`;
-        const optimisticMessage = {
-          id: tempMessageId,
-          content: messageText.trim(),
-          sender: "me",
-          time: new Date().toLocaleTimeString("tr-TR", {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-          status: "sending",
-          timestamp: new Date(),
-          isOptimistic: true,
-        };
+      // Stop typing indicator
+      stopTyping();
 
-        // Add optimistic message to UI
-        setMessages((prev) => [...prev, optimisticMessage]);
-        setMessageText("");
+      // Get the receiver ID from the selected chat participants
+      const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+      const receiver = selectedChat.participants.find(
+        (p) => (typeof p === "string" ? p : p._id) !== currentUser.id
+      );
+      const receiverId = typeof receiver === "string" ? receiver : receiver._id;
 
-        // Stop typing indicator
-        stopTyping();
+      // Send message via WebSocket for real-time delivery
+      if (socketServiceRef.current) {
+        try {
+          socketServiceRef.current.sendMessage(receiverId, messageText.trim());
 
-        // Get the receiver ID from the selected chat participants
-        const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
-        const receiver = selectedChat.participants.find(
-          (p) => (typeof p === "string" ? p : p._id) !== currentUser.id
-        );
-        const receiverId =
-          typeof receiver === "string" ? receiver : receiver._id;
-
-        // Send message via WebSocket for real-time delivery
-        socketService.sendMessage(receiverId, messageText.trim());
-        console.log("receiverId", receiverId, receiver, selectedChat);
-        // Also send via REST API for persistence
-      } catch (error) {
-        console.error("Failed to send message:", error);
-
-        // Remove failed optimistic message
-        setMessages((prev) => prev.filter((msg) => !msg.isOptimistic));
-
-        // Show error to user
-        alert("Mesaj gönderilemedi: " + error.message);
-      } finally {
-        setSendingMessage(false);
+          // Update optimistic message status to sent
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === tempMessageId
+                ? { ...msg, status: "sent", isOptimistic: false }
+                : msg
+            )
+          );
+        } catch (error) {
+          console.error("WebSocket send failed:", error);
+          // Remove failed optimistic message
+          setMessages((prev) => prev.filter((msg) => !msg.isOptimistic));
+          throw error;
+        }
       }
+    } catch (error) {
+      console.error("Failed to send message:", error);
+
+      // Remove failed optimistic message
+      setMessages((prev) => prev.filter((msg) => !msg.isOptimistic));
+
+      // Show error to user
+      alert("Mesaj gönderilemedi: " + error.message);
     }
   };
 
-  // Enhanced typing indicator
+  // Enhanced typing indicator with better throttling
   const handleTyping = useCallback(async () => {
     if (!selectedChat) return;
 
     const now = Date.now();
     if (now - lastTypingTimeRef.current > 1000) {
       // Throttle typing events
-      const socketService = (await import("../services/socket")).default;
+      if (socketServiceRef.current) {
+        // Get the receiver ID from the selected chat participants
+        const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+        const receiver = selectedChat.participants?.find(
+          (p) => p._id !== currentUser.id
+        );
+        const receiverId = receiver?._id || selectedChat.id;
 
-      // Get the receiver ID from the selected chat participants
-      const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
-      const receiver = selectedChat.participants?.find(
-        (p) => p._id !== currentUser.id
-      );
-      const receiverId = receiver?._id || selectedChat.id;
-
-      // Ensure socket is connected before trying to emit
-      if (!socketService.getConnectionStatus()) {
-        const token = localStorage.getItem("accessToken");
-        if (token) {
-          socketService.connect(token);
-          // Wait a bit for connection to establish
-          setTimeout(() => {
-            if (socketService.getConnectionStatus()) {
-              socketService.startTyping(receiverId);
+        // Ensure socket is connected before trying to emit
+        if (!socketServiceRef.current.getConnectionStatus()) {
+          const token = localStorage.getItem("accessToken");
+          if (token) {
+            try {
+              await socketServiceRef.current.connect(token);
+              socketServiceRef.current.startTyping(receiverId);
+            } catch (error) {
+              console.error("Failed to connect socket for typing:", error);
             }
-          }, 1000);
+          }
+        } else {
+          socketServiceRef.current.startTyping(receiverId);
         }
-      } else {
-        socketService.startTyping(receiverId);
+        lastTypingTimeRef.current = now;
       }
-      lastTypingTimeRef.current = now;
     }
 
     // Clear existing timeout
@@ -206,11 +211,8 @@ const Messages = () => {
   }, [selectedChat, user]);
 
   const stopTyping = useCallback(async () => {
-    if (!selectedChat) return;
+    if (!selectedChat || !socketServiceRef.current) return;
 
-    const socketService = (await import("../services/socket")).default;
-
-    // Get the receiver ID from the selected chat participants
     const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
     const receiver = selectedChat.participants?.find(
       (p) => p._id !== currentUser.id
@@ -218,8 +220,8 @@ const Messages = () => {
     const receiverId = receiver?._id || selectedChat.id;
 
     // Only try to stop typing if socket is connected
-    if (socketService.getConnectionStatus()) {
-      socketService.stopTyping(receiverId);
+    if (socketServiceRef.current.getConnectionStatus()) {
+      socketServiceRef.current.stopTyping(receiverId);
     }
   }, [selectedChat]);
 
@@ -502,142 +504,189 @@ const Messages = () => {
     }
   };
 
-  // Enhanced WebSocket setup
+  // Enhanced WebSocket setup with proper cleanup
   const setupWebSocket = useCallback(async () => {
-    const socketService = (await import("../services/socket")).default;
+    try {
+      const socketService = (await import("../services/socket")).default;
+      socketServiceRef.current = socketService;
 
-    // Connect to socket if not already connected
-    const token = localStorage.getItem("accessToken");
+      // Connect to socket if not already connected
+      const token = localStorage.getItem("accessToken");
 
-    if (token && !socketService.getConnectionStatus()) {
-      socketService.connect(token);
-    }
+      if (token && !socketService.getConnectionStatus()) {
+        await socketService.connect(token);
+      }
 
-    // Listen for new messages
-    socketService.onMessage("message:receive", (message) => {
-      console.log("message:receive", message);
-      // Get current user ID from localStorage
-      const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
-      const isCurrentUser =
-        message.senderId?._id === currentUser.id ||
-        message.senderId === currentUser.id;
+      // Listen for new messages
+      const messageCleanup = socketService.onMessage(
+        "message:receive",
+        (message) => {
+          console.log("message:receive", message);
 
-      // If the message is for the currently selected chat, add it to messages
-      if (
-        selectedChat &&
-        (message.conversationId === selectedChat.id ||
-          message.receiverId === currentUser.id)
-      ) {
-        loadMessages(selectedChat.id);
+          // Prevent duplicate message processing
+          const messageExists = messages.some(
+            (msg) => msg.id === message._id || msg.id === message.id
+          );
+          if (messageExists) {
+            return;
+          }
 
-        const newMessage = {
-          id: message._id || message.id,
-          content: message.content,
-          sender: isCurrentUser ? "me" : "them",
-          time: new Date().toLocaleTimeString("tr-TR", {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-          status: "delivered",
-          timestamp: new Date(),
-          type: message.type || "text",
-          fileUrl: message.fileUrl,
-          fileName: message.fileName,
-          fileSize: message.fileSize,
-        };
-        console.log("newMessage", newMessage);
+          // Get current user ID from localStorage
+          const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+          const isCurrentUser =
+            message.senderId?._id === currentUser.id ||
+            message.senderId === currentUser.id;
 
-        setMessages((prev) => [...prev, newMessage]);
+          // If the message is for the currently selected chat, add it to messages
+          if (
+            selectedChat &&
+            (message.conversationId === selectedChat.id ||
+              message.receiverId === currentUser.id)
+          ) {
+            const newMessage = {
+              id: message._id || message.id,
+              content: message.content,
+              sender: isCurrentUser ? "me" : "them",
+              time: new Date().toLocaleTimeString("tr-TR", {
+                hour: "2-digit",
+                minute: "2-digit",
+              }),
+              status: "delivered",
+              timestamp: new Date(),
+              type: message.type || "text",
+              fileUrl: message.fileUrl,
+              fileName: message.fileName,
+              fileSize: message.fileSize,
+            };
+            console.log("newMessage", newMessage);
 
-        // Update the chat's last message
-        setChats((prev) =>
-          prev.map((chat) =>
-            chat.id === selectedChat.id
-              ? { ...chat, lastMessage: message.content, time: "Şimdi" }
-              : chat
-          )
-        );
+            setMessages((prev) => [...prev, newMessage]);
 
-        // Mark as read if chat is selected
-        if (selectedChat && selectedChat.id === message.conversationId) {
-          markConversationAsRead(message.conversationId);
+            // Update the chat's last message
+            setChats((prev) =>
+              prev.map((chat) =>
+                chat.id === selectedChat.id
+                  ? { ...chat, lastMessage: message.content, time: "Şimdi" }
+                  : chat
+              )
+            );
+
+            // Mark as read if chat is selected
+            if (selectedChat && selectedChat.id === message.conversationId) {
+              markConversationAsRead(message.conversationId);
+            }
+          } else if (!selectedChat) {
+            // Only reload conversations if no chat is selected to prevent unnecessary API calls
+            loadConversations();
+          }
         }
-      }
-      else if(!selectedChat) {
-        loadConversations();
-      }
-    });
-
-    // Listen for message status updates
-    socketService.onMessage("message:delivered", (data) => {
-      setMessageStatus((prev) => ({
-        ...prev,
-        [data.messageId]: "delivered",
-      }));
-    });
-
-    socketService.onMessage("message:read", (data) => {
-      setMessageStatus((prev) => ({
-        ...prev,
-        [data.messageId]: "read",
-      }));
-    });
-
-    // Listen for typing indicators
-    socketService.onTyping("typing:start", (data) => {
-      if (data.conversationId === selectedChat?.id) {
-        setTypingUsers((prev) => new Set(prev).add(data.userId));
-      }
-    });
-
-    socketService.onTyping("typing:stop", (data) => {
-      if (data.conversationId === selectedChat?.id) {
-        setTypingUsers((prev) => {
-          const newSet = new Set(prev);
-          newSet.delete(data.userId);
-          return newSet;
-        });
-      }
-    });
-
-    // Listen for user online/offline status
-    socketService.onOnlineStatus("user:online", (data) => {
-      setChats((prev) =>
-        prev.map((chat) => {
-          if (!chat.participants) return chat;
-
-          const hasUser = chat.participants.some((p) => p._id === data.userId);
-          return hasUser ? { ...chat, online: true } : chat;
-        })
       );
-    });
 
-    socketService.onOnlineStatus("user:offline", (data) => {
-      setChats((prev) =>
-        prev.map((chat) => {
-          if (!chat.participants) return chat;
-
-          const hasUser = chat.participants.some((p) => p._id === data.userId);
-          return hasUser
-            ? { ...chat, online: false, lastSeen: new Date() }
-            : chat;
-        })
+      // Listen for message status updates
+      const deliveredCleanup = socketService.onMessage(
+        "message:delivered",
+        (data) => {
+          setMessageStatus((prev) => ({
+            ...prev,
+            [data.messageId]: "delivered",
+          }));
+        }
       );
-    });
-  }, [selectedChat, user]);
+
+      const readCleanup = socketService.onMessage("message:read", (data) => {
+        setMessageStatus((prev) => ({
+          ...prev,
+          [data.messageId]: "read",
+        }));
+      });
+
+      // Listen for typing indicators
+      const typingStartCleanup = socketService.onTyping(
+        "typing:start",
+        (data) => {
+          if (data.conversationId === selectedChat?.id || data.userId) {
+            setTypingUsers((prev) => new Set(prev).add(data.userId));
+          }
+        }
+      );
+
+      const typingStopCleanup = socketService.onTyping(
+        "typing:stop",
+        (data) => {
+          if (data.conversationId === selectedChat?.id || data.userId) {
+            setTypingUsers((prev) => {
+              const newSet = new Set(prev);
+              newSet.delete(data.userId);
+              return newSet;
+            });
+          }
+        }
+      );
+
+      // Listen for user online/offline status
+      const onlineCleanup = socketService.onOnlineStatus(
+        "user:online",
+        (data) => {
+          setChats((prev) =>
+            prev.map((chat) => {
+              if (!chat.participants) return chat;
+
+              const hasUser = chat.participants.some(
+                (p) => p._id === data.userId
+              );
+              return hasUser ? { ...chat, online: true } : chat;
+            })
+          );
+        }
+      );
+
+      const offlineCleanup = socketService.onOnlineStatus(
+        "user:offline",
+        (data) => {
+          setChats((prev) =>
+            prev.map((chat) => {
+              if (!chat.participants) return chat;
+
+              const hasUser = chat.participants.some(
+                (p) => p._id === data.userId
+              );
+              return hasUser
+                ? { ...chat, online: false, lastSeen: new Date() }
+                : chat;
+            })
+          );
+        }
+      );
+
+      // Store cleanup functions
+      cleanupFunctionsRef.current = [
+        messageCleanup,
+        deliveredCleanup,
+        readCleanup,
+        typingStartCleanup,
+        typingStopCleanup,
+        onlineCleanup,
+        offlineCleanup,
+      ];
+    } catch (error) {
+      console.error("Failed to setup WebSocket:", error);
+    }
+  }, [selectedChat, user, messages]);
 
   const cleanup = async () => {
-    const socketService = (await import("../services/socket")).default;
-    socketService.offMessage("message:receive");
-    socketService.offMessage("message:delivered");
-    socketService.offMessage("message:read");
-    socketService.offTyping("typing:start");
-    socketService.offTyping("typing:stop");
-    socketService.offOnlineStatus("user:online");
-    socketService.offOnlineStatus("user:offline");
+    // Execute all cleanup functions
+    cleanupFunctionsRef.current.forEach((cleanupFn) => {
+      if (typeof cleanupFn === "function") {
+        cleanupFn();
+      }
+    });
+    cleanupFunctionsRef.current = [];
 
     // Disconnect socket when component unmounts
-    socketService.disconnect();
+    if (socketServiceRef.current) {
+      socketServiceRef.current.disconnect();
+      socketServiceRef.current = null;
+    }
   };
 
   useEffect(() => {
@@ -1267,14 +1316,14 @@ const Messages = () => {
                       </div>
                       <button
                         onClick={sendMessage}
-                        disabled={!messageText.trim() || sendingMessage}
+                        disabled={!messageText.trim()}
                         className={`p-3 rounded-full transition-all duration-300 ${
-                          sendingMessage || !messageText.trim()
+                          !messageText.trim()
                             ? "bg-gray-300 cursor-not-allowed"
                             : "bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 hover:shadow-lg transform hover:scale-110 active:scale-95"
                         } text-white shadow-md`}
                       >
-                        {sendingMessage ? (
+                        {false ? (
                           <div className="flex items-center space-x-2">
                             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                             <span className="text-sm font-medium">

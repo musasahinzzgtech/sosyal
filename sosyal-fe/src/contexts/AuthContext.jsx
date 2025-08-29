@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
 
 const AuthContext = createContext();
 
@@ -13,6 +13,7 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const socketServiceRef = useRef(null);
 
   useEffect(() => {
     // Check if user is already logged in
@@ -24,10 +25,20 @@ export const AuthProvider = ({ children }) => {
         if (storedUser && accessToken) {
           setUser(JSON.parse(storedUser));
           
-          // Connect to WebSocket
-          const socketService = (await import('../services/socket')).default;
-          socketService.disconnect();
-          socketService.connect(accessToken);
+          // Connect to WebSocket only once
+          if (!socketServiceRef.current) {
+            const socketService = (await import('../services/socket')).default;
+            socketServiceRef.current = socketService;
+            
+            // Only connect if not already connected
+            if (!socketService.getConnectionStatus()) {
+              try {
+                await socketService.connect(accessToken);
+              } catch (error) {
+                console.error('Failed to connect socket:', error);
+              }
+            }
+          }
         }
       } catch (error) {
         console.error('Auth check failed:', error);
@@ -42,11 +53,25 @@ export const AuthProvider = ({ children }) => {
     checkAuth();
   }, []);
 
-  const login = (userData, tokens) => {
+  const login = async (userData, tokens) => {
     setUser(userData);
     localStorage.setItem('user', JSON.stringify(userData));
     localStorage.setItem('accessToken', tokens.access_token);
     localStorage.setItem('refreshToken', tokens.refresh_token);
+    
+    // Connect to WebSocket after login
+    try {
+      if (!socketServiceRef.current) {
+        const socketService = (await import('../services/socket')).default;
+        socketServiceRef.current = socketService;
+      }
+      
+      if (!socketServiceRef.current.getConnectionStatus()) {
+        await socketServiceRef.current.connect(tokens.access_token);
+      }
+    } catch (error) {
+      console.error('Failed to connect socket after login:', error);
+    }
   };
 
   const logout = async () => {
@@ -62,8 +87,10 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem('refreshToken');
       
       // Disconnect WebSocket
-      const socketService = (await import('../services/socket')).default;
-      socketService.disconnect();
+      if (socketServiceRef.current) {
+        socketServiceRef.current.disconnect();
+        socketServiceRef.current = null;
+      }
     }
   };
 

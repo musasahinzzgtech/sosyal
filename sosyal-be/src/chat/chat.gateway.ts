@@ -16,6 +16,7 @@ import { WsJwtGuard } from "./guards/ws-jwt.guard";
 interface AuthenticatedSocket extends Socket {
   userId?: string;
   userEmail?: string;
+  lastPing?: number; // Added for cleanup
 }
 
 @WebSocketGateway({
@@ -55,6 +56,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // Store user info in socket
       client.userId = user.id;
       client.userEmail = user.email;
+      client.lastPing = Date.now(); // Initialize lastPing
 
       // Add user to connected users
       this.connectedUsers.set(user.id, client.id);
@@ -201,24 +203,26 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @UseGuards(WsJwtGuard)
   @SubscribeMessage("typing:start")
   async handleTypingStart(
-    @MessageBody() data: { receiverId: string },
+    @MessageBody() data: { receiverId: string; conversationId?: string },
     @ConnectedSocket() client: AuthenticatedSocket
   ) {
     // Notify receiver that user is typing
     this.server.to(`user:${data.receiverId}`).emit("typing:start", {
       userId: client.userId,
+      conversationId: data.conversationId,
     });
   }
 
   @UseGuards(WsJwtGuard)
   @SubscribeMessage("typing:stop")
   async handleTypingStop(
-    @MessageBody() data: { receiverId: string },
+    @MessageBody() data: { receiverId: string; conversationId?: string },
     @ConnectedSocket() client: AuthenticatedSocket
   ) {
     // Notify receiver that user stopped typing
     this.server.to(`user:${data.receiverId}`).emit("typing:stop", {
       userId: client.userId,
+      conversationId: data.conversationId,
     });
   }
 
@@ -271,5 +275,18 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   // Check if user is online
   isUserOnline(userId: string): boolean {
     return this.connectedUsers.has(userId);
+  }
+
+  // Clean up inactive connections (called periodically)
+  cleanupInactiveConnections() {
+    const now = Date.now();
+    const timeout = 60000; // 1 minute timeout
+
+    this.server.sockets.sockets.forEach((socket: AuthenticatedSocket) => {
+      if (socket.lastPing && (now - socket.lastPing) > timeout) {
+        console.log(`Cleaning up inactive socket: ${socket.id}`);
+        socket.disconnect();
+      }
+    });
   }
 }

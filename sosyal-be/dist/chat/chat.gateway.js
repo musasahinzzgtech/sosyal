@@ -39,6 +39,7 @@ let ChatGateway = class ChatGateway {
             }
             client.userId = user.id;
             client.userEmail = user.email;
+            client.lastPing = Date.now();
             this.connectedUsers.set(user.id, client.id);
             await this.usersService.updateOnlineStatus(user.id, true);
             client.join(`user:${user.id}`);
@@ -123,11 +124,13 @@ let ChatGateway = class ChatGateway {
     async handleTypingStart(data, client) {
         this.server.to(`user:${data.receiverId}`).emit("typing:start", {
             userId: client.userId,
+            conversationId: data.conversationId,
         });
     }
     async handleTypingStop(data, client) {
         this.server.to(`user:${data.receiverId}`).emit("typing:stop", {
             userId: client.userId,
+            conversationId: data.conversationId,
         });
     }
     async handleUserTyping(data, client) {
@@ -166,6 +169,16 @@ let ChatGateway = class ChatGateway {
     }
     isUserOnline(userId) {
         return this.connectedUsers.has(userId);
+    }
+    cleanupInactiveConnections() {
+        const now = Date.now();
+        const timeout = 60000;
+        this.server.sockets.sockets.forEach((socket) => {
+            if (socket.lastPing && (now - socket.lastPing) > timeout) {
+                console.log(`Cleaning up inactive socket: ${socket.id}`);
+                socket.disconnect();
+            }
+        });
     }
 };
 exports.ChatGateway = ChatGateway;
