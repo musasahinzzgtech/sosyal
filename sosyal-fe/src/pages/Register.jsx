@@ -25,10 +25,8 @@ const Register = () => {
     businessAddress: "",
     businessSector: "",
     businessServices: "",
-    /*
-    latitude: "",
-    longitude: "",
-    */
+    businessLatitude: "",
+    businessLongitude: "",
   });
 
   // Google Maps API Key - Replace with your actual API key
@@ -50,7 +48,13 @@ const Register = () => {
 
   // Initialize map when location picker is shown
   useEffect(() => {
-    if (showLocationPicker && window.google && !map) {
+    if (showLocationPicker && window.google) {
+      // Clear existing map if it exists
+      if (map) {
+        setMap(null);
+        return;
+      }
+
       const defaultLocation = { lat: 39.9334, lng: 32.8597 }; // Ankara
       const mapInstance = new window.google.maps.Map(
         document.getElementById("map"),
@@ -170,6 +174,13 @@ const Register = () => {
           searchBox.disabled = true;
         }
       }
+    }
+  }, [showLocationPicker]);
+
+  // Cleanup map when location picker is closed
+  useEffect(() => {
+    if (!showLocationPicker && map) {
+      setMap(null);
     }
   }, [showLocationPicker, map]);
 
@@ -416,6 +427,8 @@ const Register = () => {
           businessAddress: formData.businessAddress,
           instagram: formData.instagram,
           facebook: formData.facebook,
+          businessLatitude: selectedLocation.lat,
+          businessLongitude: selectedLocation.lng,
         }),
       };
 
@@ -1373,9 +1386,9 @@ const Register = () => {
       {/* Google Maps Location Picker Modal */}
       {showLocationPicker && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl h-[90vh] flex flex-col">
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 flex-shrink-0">
               <div>
                 <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
                   Konum Seçimi
@@ -1394,8 +1407,8 @@ const Register = () => {
               </button>
             </div>
 
-            {/* Map Container */}
-            <div className="p-4 sm:p-6">
+            {/* Map Container - Scrollable */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
               <div className="relative">
                 {/* Search Box and Current Location */}
                 <div className="mb-4 space-y-3">
@@ -1482,8 +1495,8 @@ const Register = () => {
               </div>
             </div>
 
-            {/* Modal Footer */}
-            <div className="flex flex-col sm:flex-row gap-3 p-4 sm:p-6 border-t border-gray-200 bg-gray-50">
+            {/* Modal Footer - Always Visible */}
+            <div className="flex flex-col sm:flex-row gap-3 p-4 sm:p-6 border-t border-gray-200 bg-gray-50 flex-shrink-0">
               <div className="flex-1">
                 {selectedLocation && (
                   <div className="text-sm text-gray-700">

@@ -246,6 +246,8 @@ export class UsersController {
         businessAddress: userData.businessAddress || undefined,
         businessSector: userData.businessSector || undefined,
         businessServices: userData.businessServices || undefined,
+        businessLatitude: userData.businessLatitude || undefined,
+        businessLongitude: userData.businessLongitude || undefined,
         // Social media fields
         instagram: userData.instagram || undefined,
         facebook: userData.facebook || undefined,

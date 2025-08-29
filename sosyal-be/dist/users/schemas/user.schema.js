@@ -70,6 +70,14 @@ __decorate([
 ], User.prototype, "businessServices", void 0);
 __decorate([
     (0, mongoose_1.Prop)(),
+    __metadata("design:type", Number)
+], User.prototype, "businessLatitude", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", Number)
+], User.prototype, "businessLongitude", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
     __metadata("design:type", String)
 ], User.prototype, "instagram", void 0);
 __decorate([

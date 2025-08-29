@@ -70,6 +70,16 @@ __decorate([
     __metadata("design:type", String)
 ], CreateUserDto.prototype, "businessServices", void 0);
 __decorate([
+    (0, class_validator_1.ValidateIf)((o) => o.userType === user_schema_1.UserType.ISLETME),
+    (0, class_validator_1.IsNumber)(),
+    __metadata("design:type", Number)
+], CreateUserDto.prototype, "businessLatitude", void 0);
+__decorate([
+    (0, class_validator_1.ValidateIf)((o) => o.userType === user_schema_1.UserType.ISLETME),
+    (0, class_validator_1.IsNumber)(),
+    __metadata("design:type", Number)
+], CreateUserDto.prototype, "businessLongitude", void 0);
+__decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)

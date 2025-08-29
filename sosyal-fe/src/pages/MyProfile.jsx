@@ -18,6 +18,8 @@ const Profile = () => {
     businessName: "",
     businessSector: "",
     businessServices: "",
+    businessLatitude: "",
+    businessLongitude: "",
     instagram: "",
     facebook: "",
   });
@@ -36,6 +38,8 @@ const Profile = () => {
         businessName: user.businessName || "",
         businessSector: user.businessSector || "",
         businessServices: user.businessServices || "",
+        businessLatitude: user.businessLatitude || "",
+        businessLongitude: user.businessLongitude || "",
         instagram: user.instagram || "",
         facebook: user.facebook || "",
       });

@@ -49,6 +49,12 @@ export class User extends Document {
   @Prop()
   businessServices?: string;
 
+  @Prop()
+  businessLatitude?: number;
+
+  @Prop()
+  businessLongitude?: number;
+
   // Social media fields
   @Prop()
   instagram?: string;

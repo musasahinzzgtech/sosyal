@@ -18,6 +18,8 @@ export declare class User extends Document {
     businessAddress?: string;
     businessSector?: string;
     businessServices?: string;
+    businessLatitude?: number;
+    businessLongitude?: number;
     instagram?: string;
     facebook?: string;
     photos?: string[];

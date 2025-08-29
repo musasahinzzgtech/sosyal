@@ -57,6 +57,14 @@ export class CreateUserDto {
   @IsString()
   businessServices?: string;
 
+  @ValidateIf((o) => o.userType === UserType.ISLETME)
+  @IsNumber()
+  businessLatitude?: number;
+
+  @ValidateIf((o) => o.userType === UserType.ISLETME)
+  @IsNumber()
+  businessLongitude?: number;
+
   // Social media fields
   @IsOptional()
   @IsString()
