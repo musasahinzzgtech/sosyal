@@ -109,39 +109,66 @@ const Register = () => {
         });
       });
 
-      // Initialize search box
+      // Initialize Google Autocomplete
       const searchBox = document.getElementById("searchBox");
       if (searchBox) {
-        const searchBoxInstance = new window.google.maps.places.SearchBox(searchBox);
-        
-        // Bias the SearchBox results towards current map's viewport
-        mapInstance.addListener("bounds_changed", () => {
-          searchBoxInstance.setBounds(mapInstance.getBounds());
-        });
-
-        // Listen for the event fired when the user selects a prediction
-        searchBoxInstance.addListener("places_changed", () => {
-          const places = searchBoxInstance.getPlaces();
-          if (places.length === 0) return;
-
-          const place = places[0];
-          if (!place.geometry || !place.geometry.location) return;
-
-          // If the place has a geometry, then present it on a map
-          if (place.geometry.viewport) {
-            mapInstance.fitBounds(place.geometry.viewport);
-          } else {
-            mapInstance.setCenter(place.geometry.location);
-            mapInstance.setZoom(17);
-          }
-
-          // Set marker position
-          markerInstance.setPosition(place.geometry.location);
-          setSelectedLocation({
-            lat: place.geometry.location.lat(),
-            lng: place.geometry.location.lng(),
+        try {
+          // Create Autocomplete instance for better user experience
+          const autocomplete = new window.google.maps.places.Autocomplete(searchBox, {
+            types: ['geocode', 'establishment'],
+            componentRestrictions: { country: 'tr' }, // Restrict to Turkey
+            fields: ['geometry', 'formatted_address', 'name', 'place_id'],
           });
-        });
+
+          // Bias the Autocomplete results towards current map's viewport
+          mapInstance.addListener("bounds_changed", () => {
+            autocomplete.setBounds(mapInstance.getBounds());
+          });
+
+          // Listen for place selection
+          autocomplete.addListener("place_changed", () => {
+            const place = autocomplete.getPlace();
+            
+            if (!place.geometry || !place.geometry.location) {
+              console.log("No geometry found for selected place");
+              return;
+            }
+
+            // If the place has a geometry, then present it on a map
+            if (place.geometry.viewport) {
+              mapInstance.fitBounds(place.geometry.viewport);
+            } else {
+              mapInstance.setCenter(place.geometry.location);
+              mapInstance.setZoom(17);
+            }
+
+            // Set marker position
+            markerInstance.setPosition(place.geometry.location);
+            setSelectedLocation({
+              lat: place.geometry.location.lat(),
+              lng: place.geometry.location.lng(),
+            });
+
+            // Update search box with formatted address
+            searchBox.value = place.formatted_address || place.name || '';
+          });
+
+          // Add keyboard navigation support
+          searchBox.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              // Trigger place selection
+              const event = new Event("place_changed");
+              autocomplete.trigger(event);
+            }
+          });
+
+        } catch (error) {
+          console.error("Error initializing Autocomplete:", error);
+          // Fallback: show error message to user
+          searchBox.placeholder = "Arama özelliği kullanılamıyor";
+          searchBox.disabled = true;
+        }
       }
     }
   }, [showLocationPicker, map]);
@@ -206,6 +233,7 @@ const Register = () => {
             const newPosition = { lat: latitude, lng: longitude };
             map.setCenter(newPosition);
             map.setZoom(16);
+            map.setMarker({ lat: latitude, lng: longitude });
             
             // Update marker position
             const markers = map.getMarkers?.() || [];
@@ -223,6 +251,15 @@ const Register = () => {
       );
     } else {
       alert("Tarayıcınız konum özelliğini desteklemiyor.");
+    }
+  };
+
+  // Handle search input changes
+  const handleSearchInputChange = (e) => {
+    const value = e.target.value;
+    if (value.length > 2) {
+      // Show that autocomplete is working
+      console.log("Searching for:", value);
     }
   };
   const handleInputChange = (e) => {
@@ -1366,12 +1403,20 @@ const Register = () => {
                     <input
                       type="text"
                       id="searchBox"
-                      placeholder="Adres veya yer ara..."
+                      placeholder="Adres veya yer ara... (örn: Ankara, İstanbul, İzmir)"
                       className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                      autoComplete="off"
+                      spellCheck="false"
+                      onChange={handleSearchInputChange}
                     />
                     <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      <div className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">
+                        🇹🇷 TR
+                      </div>
+                    </div>
                   </div>
                   
                   <div className="flex gap-2">
@@ -1398,13 +1443,14 @@ const Register = () => {
                     <button
                       onClick={() => {
                         if (map) {
-                          map.setCenter({ lat: 39.9334, lng: 32.8597 }); // Ankara
+                          map.setCenter({ lat: 37.7749, lng: 29.0858 }); // Denizli
                           map.setZoom(13);
+                          map.setMarker({ lat: 37.7749, lng: 29.0858 });
                         }
                       }}
                       className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200 text-sm font-medium"
                     >
-                      Ankara'ya Git
+                      Denizli'ya Git
                     </button>
                   </div>
                 </div>
