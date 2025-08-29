@@ -2,31 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { useLocation } from "react-router-dom";
 
-// Add custom CSS for animations
-const customStyles = `
-  @keyframes fade-in {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
-  .animate-fade-in {
-    animation: fade-in 0.3s ease-out;
-  }
-`;
 
-// Inject styles
-if (typeof document !== "undefined") {
-  const styleSheet = document.createElement("style");
-  styleSheet.type = "text/css";
-  styleSheet.innerText = customStyles;
-  document.head.appendChild(styleSheet);
-}
 
 // Skeleton Components for better loading UX
 const ChatSkeleton = () => (
@@ -1222,18 +1198,14 @@ const Messages = () => {
                       </div>
                     ) : (
                       <>
-                        {messages.map((message, index) => (
+                        {messages.map((message) => (
                           <div
                             key={message.id}
                             className={`flex ${
                               message.sender === "me"
                                 ? "justify-end"
                                 : "justify-start"
-                            } animate-fade-in`}
-                            style={{
-                              animationDelay: `${index * 0.1}s`,
-                              animationFillMode: "both",
-                            }}
+                            }`}
                           >
                             <div
                               className={`max-w-[280px] sm:max-w-xs lg:max-w-md px-3 py-2 sm:px-4 sm:py-3 rounded-2xl shadow-sm transition-all duration-200 hover:shadow-md ${
