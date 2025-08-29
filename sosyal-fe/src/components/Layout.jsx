@@ -97,6 +97,19 @@ const Layout = () => {
               to="/hakkimizda"
               className="inline-flex items-center px-3 py-2 text-sm text-gray-700 hover:text-blue-600 font-medium transition-all duration-200 hover:bg-blue-50 rounded-lg group"
             >
+              <svg
+                className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform duration-200"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
               Hakkımızda
             </Link>
             {user && (
@@ -104,6 +117,19 @@ const Layout = () => {
                 to="/mesajlar"
                 className="inline-flex items-center px-3 py-2 text-sm text-gray-700 hover:text-blue-600 font-medium transition-all duration-200 hover:bg-blue-50 rounded-lg group"
               >
+                <svg
+                  className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform duration-200"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                  />
+                </svg>
                 Mesajlar
               </Link>
             )}
@@ -111,6 +137,19 @@ const Layout = () => {
               to="/cekici-hizmetleri"
               className="inline-flex items-center px-3 py-2 text-sm text-gray-700 hover:text-blue-600 font-medium transition-all duration-200 hover:bg-blue-50 rounded-lg group"
             >
+              <svg
+                className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform duration-200"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 10V3L4 14h7v7l9-11h-7z"
+                />
+              </svg>
               Yol Yardımı
             </Link>
           </div>
