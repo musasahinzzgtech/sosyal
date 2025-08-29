@@ -62,7 +62,7 @@ const Messages = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [chats, setChats] = useState([]);
   const [messages, setMessages] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [isConversationsLoading, setIsConversationsLoading] = useState(true);
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showChatList, setShowChatList] = useState(true); // Mobile chat list toggle
@@ -444,7 +444,7 @@ const Messages = () => {
   // Enhanced conversation loading
   const loadConversations = async () => {
     try {
-      setLoading(true);
+      setIsConversationsLoading(true);
       const apiService = (await import("../services/api")).default;
       const conversations = await apiService.getConversations();
 
@@ -498,7 +498,7 @@ const Messages = () => {
       setError("Sohbetler yüklenemedi");
       setChats([]);
     } finally {
-      setLoading(false);
+      setIsConversationsLoading(false);
     }
   };
 
@@ -528,6 +528,8 @@ const Messages = () => {
         (message.conversationId === selectedChat.id ||
           message.receiverId === currentUser.id)
       ) {
+        loadMessages(selectedChat.id);
+
         const newMessage = {
           id: message._id || message.id,
           content: message.content,
@@ -561,11 +563,7 @@ const Messages = () => {
           markConversationAsRead(message.conversationId);
         }
       }
-
-      // Reload conversations to update last message and time
-      if (selectedChat) {
-        loadMessages(selectedChat.id);
-      } else {
+      else if(!selectedChat) {
         loadConversations();
       }
     });
@@ -641,9 +639,13 @@ const Messages = () => {
     // Disconnect socket when component unmounts
     socketService.disconnect();
   };
-  // Load conversations and set up WebSocket listeners
+
   useEffect(() => {
     loadConversations();
+  }, []);
+
+  // Load conversations and set up WebSocket listeners
+  useEffect(() => {
     setupWebSocket();
 
     // Cleanup function
@@ -665,7 +667,7 @@ const Messages = () => {
   const startNewConversation = async (targetUser) => {
     // start new conversation ve duplicate mesaj göndermede sorun kaldı
     try {
-      setLoading(true);
+      setIsConversationsLoading(true);
       console.log("Starting new conversation with:", targetUser);
 
       const apiService = (await import("../services/api")).default;
@@ -733,11 +735,11 @@ const Messages = () => {
       console.error("Failed to start conversation:", error);
       alert("Sohbet başlatılamadı: " + (error.message || "Bilinmeyen hata"));
     } finally {
-      setLoading(false);
+      setIsConversationsLoading(false);
     }
   };
 
-  if (loading && !selectedChat) {
+  if (isConversationsLoading && !selectedChat) {
     return (
       <div className="min-h-screen bg-gray-50">
         {/* Header Skeleton */}
@@ -820,7 +822,7 @@ const Messages = () => {
             <button
               onClick={() => {
                 setError(null);
-                setLoading(true);
+                setIsConversationsLoading(true);
                 loadConversations();
               }}
               className="w-full px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all duration-200 font-medium shadow-sm hover:shadow-md"
@@ -966,7 +968,7 @@ const Messages = () => {
 
               {/* Chat List */}
               <div className="overflow-y-auto h-full">
-                {loading ? (
+                {isConversationsLoading ? (
                   // Show skeleton loaders while loading
                   [...Array(6)].map((_, i) => <ChatSkeleton key={i} />)
                 ) : chats.length === 0 ? (

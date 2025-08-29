@@ -26,6 +26,7 @@ export const AuthProvider = ({ children }) => {
           
           // Connect to WebSocket
           const socketService = (await import('../services/socket')).default;
+          socketService.disconnect();
           socketService.connect(accessToken);
         }
       } catch (error) {
